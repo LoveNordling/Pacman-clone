@@ -1,0 +1,9 @@
+import Graphics.Gloss
+
+filledSquare = color polygonColor $ polygon [(50,50), (50,-50), (-50,-50), (-50,50)] where polygonColor = blue
+tilePattern = line [(50,50), (50,-50), (-50,-50), (-50,50), (50,-50), (-50,-50), (50,50), (-50,50)]
+baseTile = pictures [filledSquare, tilePattern]
+
+
+main = display (InWindow "Nice Window" (500, 500) (400, 400)) white baseTile
+
