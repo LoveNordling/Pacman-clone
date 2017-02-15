@@ -1,11 +1,14 @@
 module Tile(Actor(..), Tile(..), generateBoard, Position, Board) where
 
+-- Suppress HLint messages
+{-# ANN module "HLint: Ignore Use mappend" #-}
+
 data Actor = Void | Player | Computer
 -- Top, left, bottom, right
 data Tile = Tile (Bool, Bool, Bool, Bool) Actor
 
-type Position = (Float, Float)
-type Board = [(Position, Tile)]
+type Position  = (Float, Float)
+type Board     = [(Position, Tile)]
 
 {-
 	generateBoard matrix

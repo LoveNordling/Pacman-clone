@@ -14,6 +14,9 @@ import Graphics.Gloss
 import Tile
 import Prelude hiding(Right, Left)
 
+-- Suppress HLint messages
+{-# ANN module "HLint: Ignore Use mappend" #-}
+
 {-
     REPRESENTATION CONVENTION:
       Represents the direction a border should be drawn.
@@ -26,6 +29,14 @@ data BorderDirection = Top | Left | Bottom | Right
 wallWidth :: Float
 wallWidth = 10
 
+-- Color of the board
+background :: Color
+background = white
+
+-- Dimensions of the board
+boardDimensions :: Int
+boardDimensions = 1000
+
 {- window x y
    PRE:           x and y must be bigger than 0
    POST:          a window with width x and height y pixels.
@@ -34,26 +45,10 @@ wallWidth = 10
 window :: Int -> Int -> Display
 window x y = InWindow "Dazzlebox" (x, y) (0, 0)
 
-{- background
-   PRE:           True
-   POST:          a color
-   EXAMPLES:      background ==
--}
-background :: Color
-background = white
-
-{- boardDimensions
-   PRE:           True
-   POST:          Width and height of the board.
-   EXAMPLES:      boardDimensions
--}
-boardDimensions :: Int
-boardDimensions = 500
-
 {- tileDimensions n
    PRE:           n > 0
-   POST:          the width/height of an individual tile.
-   EXAMPLES:      tileDimensions ==
+   POST:          the calculated width and height of n
+   EXAMPLES:      tileDimensions 9 == 74,5
 -}
 tileDimensions :: Int -> Float
 tileDimensions n = 10 * sqrt ( fromIntegral (boardDimensions) / fromIntegral (n) )
@@ -63,94 +58,88 @@ tileDimensions n = 10 * sqrt ( fromIntegral (boardDimensions) / fromIntegral (n)
    POST:      the game map based on b.
    EXAMPLES:  createBoard ==
 -}
-drawMap :: Board -> Picture
-drawMap t d = Pictures (drawMapAux t [] [])
+drawMap :: Board -> Float -> Picture
+drawMap b dimension = Pictures (generateMapElements b ([], []))
     where
-      {- drawMapAux tiles t w
-         PRE:           True?
-         POST:          display elements t and w based on tiles
-         EXAMPLES:      drawMapAux ==
-         VARIANT:       |t|
+      {- generateMapElements b acc
+         PRE:           True
+         POST:          Display elements acc based on board b.
+         EXAMPLES:      generateMapElements ==
+         VARIANT:       |b|
       -}
-      drawMapAux :: [(Position, Tile)] -> [Picture] -> [Picture] -> [Picture]
-      drawMapAux []           tileAcc wallAcc = tileAcc ++ wallAcc
-      drawMapAux (tile:tiles) tileAcc wallAcc = drawMapAux tiles ((drawTile tile d) ++ tileAcc) ((drawWall tile d) ++ wallAcc)
-      {- drawWall arguments
-           PRE:
-           POST:
-           EXAMPLES:      drawWall ==
+      generateMapElements :: Board -> ([Picture], [Picture]) -> [Picture]
+      generateMapElements [] (floors, walls) = floors ++ walls
+      generateMapElements (x@(p, t):ts) (f, w) = generateMapElements ts (drawFloor p ++ f, (drawWall x []) ++ w)
+        -- where
+        {- drawFloor p
+           PRE:           p must be a valid tile position
+           POST:          A floor tile on position p
+           EXAMPLES:      drawFloor  ==
         -}
-      drawWall :: (Position, Tile) -> Float -> [Picture]
-      drawWall ((x, y), (Tile (True, l, b, r) a)) d = (buildWall (x, y) d Top):(drawWall ((x, y), Tile (False, l, b, r) a) d)
-      drawWall ((x, y), (Tile (_, True, b, r) a)) d = (buildWall (x, y) d Left):(drawWall ((x, y), Tile (False, False, b, r) a) d)
-
-      drawWall ((x, y), (Tile (_, _, True, r) a)) d = (buildWall (x, y) d Bottom):(drawWall ((x, y), Tile (False, False, False, r) a) d)
-      drawWall ((x, y), (Tile (_, _, _, True) a)) d = (buildWall (x, y) d Right):(drawWall ((x, y), Tile (False, False, False, False) a) d)
-      drawWall ((x, y), (Tile (_, _, _, _) a)) d = []
-      {- buildWall
-         PRE:
-         POST:
-         EXAMPLES:      buildWall ==
+      drawFloor :: Position -> [Picture]
+      drawFloor p = let square = drawSquare p in [ Line square, color red $ Polygon square ]
+        where
+          {- drawSquare (x, y)
+             PRE:           True
+             POST:          coordinates for a square based on (x, y)
+             EXAMPLES:      drawSquare ==
+          -}
+          drawSquare :: Position -> [Position]
+          drawSquare (x, y) = [
+            ((x * dimension - (dimension/2)), (y * dimension + (dimension/2))),
+            ((x * dimension + (dimension/2)), (y * dimension + (dimension/2))),
+            ((x * dimension + (dimension/2)), (y * dimension - (dimension/2))),
+            ((x * dimension - (dimension/2)), (y * dimension - (dimension/2))),
+            ((x * dimension - (dimension/2)), (y * dimension + (dimension/2)))
+            ]
+      {- drawWall (p, t)
+         PRE:           True
+         POST:          Walls for t based on t and p
+         EXAMPLES:      drawWall ==
+         VARIANT:       ???
       -}
-      buildWall :: Position -> Float -> BorderDirection -> Picture
-      buildWall (x, y) d Top     =
-        Polygon [
-          ( (x * d - (d/2) - wallWidth), (y * d + (d/2) + wallWidth) ),
-          ( (x * d + (d/2) + wallWidth), (y * d + (d/2) + wallWidth) ),
-          ( (x * d + (d/2) + wallWidth), (y * d + (d/2) - wallWidth) ),
-          ( (x * d - (d/2) - wallWidth), (y * d + (d/2) - wallWidth) )
-        ]
-      buildWall (x, y) d Left    =
-        Polygon [
-          ( (x * d - (d/2)  + wallWidth), (y * d + (d/2)) + wallWidth),
-          ( (x * d - (d/2)  + wallWidth), (y * d - (d/2)) - wallWidth),
-          ( (x * d - (d/2) - wallWidth), (y * d - (d/2)) - wallWidth),
-          ( (x * d - (d/2) - wallWidth), (y * d + (d/2) ) + wallWidth)
-        ]
-      buildWall (x, y) d Bottom  =
-        Polygon [
-          ( (x * d - (d/2) - wallWidth), (y * d - (d/2) + wallWidth) ),
-          ( (x * d + (d/2) + wallWidth), (y * d - (d/2) + wallWidth) ),
-          ( (x * d + (d/2) + wallWidth), (y * d - (d/2) - wallWidth) ),
-          ( (x * d - (d/2) - wallWidth), (y * d - (d/2) - wallWidth) )
-        ]
-      buildWall (x, y) d Right   =
-        Polygon [
-          ( (x * d + (d/2)  + wallWidth), (y * d + (d/2) +wallWidth) ),
-          ( (x * d + (d/2)  + wallWidth), (y * d - (d/2) -wallWidth) ),
-          ( (x * d + (d/2) - wallWidth), (y * d - (d/2) -wallWidth) ),
-          ( (x * d + (d/2) - wallWidth), (y * d + (d/2) +wallWidth) )
-        ]
-      {- drawTile
-         PRE:
-         POST:
-         EXAMPLES:      drawTile ==
-      -}
-      drawTile :: (Position, Tile) -> Float -> [Picture]
-      drawTile t d = [(drawLines (fst t) d), (drawPolygon (fst t) d)]
-          where
-            drawLines :: Position -> Float -> Picture
-            drawLines p d = Line (drawSquare p d)
-                -- Line [
-                -- ((x * d - (d/2)), (y * d + (d/2))),
-                -- ((x * d + (d/2)), (y * d + (d/2))),
-                -- ((x * d + (d/2)), (y * d - (d/2))),
-                -- ((x * d - (d/2)), (y * d - (d/2))),
-                -- ((x * d - (d/2)), (y * d + (d/2)))
-                -- ]
-
-            drawPolygon :: Position -> Float -> Picture
-            drawPolygon p d = color red $ Polygon (drawSquare p d)
-
-            drawSquare :: Position -> Float -> [(Float, Float)]
-            drawSquare (x, y) d = [
-              ((x * d - (d/2)), (y * d + (d/2))),
-              ((x * d + (d/2)), (y * d + (d/2))),
-              ((x * d + (d/2)), (y * d - (d/2))),
-              ((x * d - (d/2)), (y * d - (d/2))),
-              ((x * d - (d/2)), (y * d + (d/2)))
-              ]
-
+      drawWall :: (Position, Tile) -> [Picture] -> [Picture]
+      drawWall (p, (Tile (top, left, bottom, right) a)) acc
+        | top       = drawWall (p, Tile (False, left, bottom, right)  a) ((buildWall p Top):acc)
+        | left      = drawWall (p, Tile (False, False, bottom, right) a) ((buildWall p Left):acc)
+        | bottom    = drawWall (p, Tile (False, False, False, right)  a) ((buildWall p Bottom):acc)
+        | right     = drawWall (p, Tile (False, False, False, False)  a) ((buildWall p Right):acc)
+        | otherwise = acc
+        where
+          {- buildWall p
+             PRE:           True
+             POST:          Polygon shape based on p.
+             EXAMPLES:      buildWall ==
+          -}
+          buildWall :: Position -> BorderDirection -> Picture
+          buildWall (x, y) Top =
+            Polygon [
+              ( (x * dimension - (dimension/2) - wallWidth), (y * dimension + (dimension/2) + wallWidth) ),
+              ( (x * dimension + (dimension/2) + wallWidth), (y * dimension + (dimension/2) + wallWidth) ),
+              ( (x * dimension + (dimension/2) + wallWidth), (y * dimension + (dimension/2) - wallWidth) ),
+              ( (x * dimension - (dimension/2) - wallWidth), (y * dimension + (dimension/2) - wallWidth) )
+            ]
+          buildWall (x, y) Left =
+            Polygon [
+              ( (x * dimension - (dimension/2) + wallWidth), (y * dimension + (dimension/2) + wallWidth) ),
+              ( (x * dimension - (dimension/2) + wallWidth), (y * dimension - (dimension/2) - wallWidth) ),
+              ( (x * dimension - (dimension/2) - wallWidth), (y * dimension - (dimension/2) - wallWidth) ),
+              ( (x * dimension - (dimension/2) - wallWidth), (y * dimension + (dimension/2) + wallWidth) )
+            ]
+          buildWall (x, y) Bottom  =
+            Polygon [
+              ( (x * dimension - (dimension/2) - wallWidth), (y * dimension - (dimension/2) + wallWidth) ),
+              ( (x * dimension + (dimension/2) + wallWidth), (y * dimension - (dimension/2) + wallWidth) ),
+              ( (x * dimension + (dimension/2) + wallWidth), (y * dimension - (dimension/2) - wallWidth) ),
+              ( (x * dimension - (dimension/2) - wallWidth), (y * dimension - (dimension/2) - wallWidth) )
+            ]
+          buildWall (x, y) Right   =
+            Polygon [
+              ( (x * dimension + (dimension/2) + wallWidth), (y * dimension + (dimension/2) + wallWidth) ),
+              ( (x * dimension + (dimension/2) + wallWidth), (y * dimension - (dimension/2) - wallWidth) ),
+              ( (x * dimension + (dimension/2) - wallWidth), (y * dimension - (dimension/2) - wallWidth) ),
+              ( (x * dimension + (dimension/2) - wallWidth), (y * dimension + (dimension/2) + wallWidth) )
+            ]
 
 {- renderMap m
    PRE:       elements in m are valid tiles.
@@ -158,4 +147,4 @@ drawMap t d = Pictures (drawMapAux t [] [])
    EXAMPLES:  generateWindow ==
 -}
 renderMap :: Board -> IO()
-renderMap tiles = display (window 1000 1000) background (drawMap tiles tileDimensions (length t))
+renderMap tiles = display (window 1000 1000) background (drawMap tiles (tileDimensions (length tiles)))
