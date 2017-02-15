@@ -8,6 +8,8 @@ import Tile
 
 -- roten ur antalet tiles måste vara ojämnt
 tiles :: [((Float, Float), Tile)]
+tiles = Tile.generateBoard loveTiles
+{-
 tiles = [
   ((-1, 1), Tile (True, True, True, False) Void) ,
   ((0, 1), Tile (True, False, False, True) Void) ,
@@ -22,7 +24,11 @@ tiles = [
   ((1, -1), Tile (False, False, True, True) Void)
 
   ]
-
+-}
+loveTiles = [[Tile (True, True, True, False) Void, Tile (True, True, True, False) Void, Tile (True, True, True, True) Void],
+			[Tile (True, True, True, False) Void,Tile (True, True, True, False) Void, Tile (True, True, True, False) Void],
+			[Tile (True, True, True, False) Void,Tile (True, True, True, False) Void, Tile (True, True, True, False) Void]]
+  
 --
 -- tiles = [
 --   ((-2, 2), Tile (True, True, True, False) Void) ,
