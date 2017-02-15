@@ -1,0 +1,8 @@
+import Tile
+
+neighbours :: (Int, Int) -> [Tile] -> [Tile]
+neighbours (a,b) ts = let
+                        left   = findNeigbour  (a-1, b)
+                        right  = findNeighbour (a+1, b)
+                        top    = findNeighbour (a  , b-1)
+                        bottom = findNeighbour (a  , b+1)
