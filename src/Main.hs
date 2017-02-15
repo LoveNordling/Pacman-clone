@@ -7,7 +7,7 @@ import Tile
 -- data Tile = Tile (Bool, Bool, Bool, Bool) Actor
 
 -- roten ur antalet tiles måste vara ojämnt
-tiles :: [((Float, Float), Tile)]
+tiles :: Board
 tiles = [
   ((-1, 1), Tile (True, True, True, False) Void) ,
   ((0, 1), Tile (True, False, False, True) Void) ,
