@@ -6,6 +6,14 @@ bounds = (1,8)
 edge :: [Edge]
 edge = [(1,2),(1,8),(2,1),(3,2),(4,3),(5,4),(5,6),(6,5),(6,7),(7,6),(7,8),(8,7),(8,1)]
 
+data Tile = Tile Vertex (Int, Int) deriving (Show)
+
+data Map = Map Graph Tile Tile
+
+data Tilex = Tilex (Bool, Bool, Bool, Bool)
+
+1 = Tilex (False, True, True, False)
+2 = Tilex (True, False, True, False)
 playerTile :: Vertex
 playerTile = 5
 
@@ -34,4 +42,3 @@ removeFromOpenSet :: [Vertex] -> Vertex -> [Vertex]
 removeFromOpenSet set tile
   | tile == head set = tail set
   | otherwise        = head set: removeFromOpenSet (tail set) tile
-  
