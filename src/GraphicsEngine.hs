@@ -16,7 +16,6 @@ mapSize = 1000
 tileSize :: Int -> Float
 tileSize n = 10 * sqrt (fromIntegral (mapSize) / fromIntegral (n))
 
-
 {- drawMap t p c
    PRE:           True
    POST:          The image to be displayed, based on t with entities p and c.
@@ -24,30 +23,45 @@ tileSize n = 10 * sqrt (fromIntegral (mapSize) / fromIntegral (n))
 -}
 drawMap :: [Tile] -> Actor -> Actor -> Picture
 drawMap t p c =
-  let
-    d = tileSize (length t)
-  in
-    Pictures ((drawInterior t d []) ++ [(drawActor p d)])
-  where
-    {- drawActor a f
-       PRE:       True
-       POST:      The actors a to be displayed.
-       EXAMPLES:  drawActor ==
-    -}
-    drawActor :: Actor -> Float -> Picture
-    drawActor (Player p) d   = (setCoordinates p d) . color blue $ circle 5
-    drawActor (Computer p) d = (setCoordinates p d) . color blue $ circle 5
-    {- drawInterior t f acc
-       PRE:       True
-       POST:      The interiors in t to be displayed.
-       EXAMPLES:  drawInterior ==
-    -}
-    drawInterior :: [Tile] -> Float -> [Picture] -> [Picture]
-    drawInterior []               d acc = acc
-    drawInterior ((Floor p _):ts) d acc = let m = (setCoordinates p d) . color red $ rectangleSolid d d
-                                          in  drawInterior ts d (m:acc)
-    drawInterior ((Wall p):ts)    d acc = let m = (setCoordinates p d) . color black $ rectangleSolid d d
-                                          in  drawInterior ts d (m:acc)
+  let d = tileSize (length t)
+      i = drawInterior t d []
+      p = drawActor p d
+      c = drawActor c d
+  in  Pictures [i, p, c] --((drawInterior t d []) ++ [(drawActor p d)])
+    where
+      {- drawActor a f
+         PRE:       True
+         POST:      The actors a to be displayed.
+         EXAMPLES:  drawActor ==
+      -}
+      drawActors :: Actor -> Float -> [Picture]
+      drawActor (Player p)   d = translateAndColor p d blue (circle 5)
+      drawActor (Computer p) d = translateAndColor p d green (circle 5)
+      {- drawInterior t f acc
+         PRE:       True
+         POST:      The interiors in t to be displayed.
+         EXAMPLES:  drawInterior ==
+         VARIANT:   |t|
+      -}
+      drawInterior :: [Tile] -> Float -> [Picture] -> [Picture]
+      drawInterior []               d acc = acc
+      drawInterior ((Floor p _):ts) d acc = drawInterior ts d ((makeRectangle p d red):acc)
+      drawInterior ((Wall p):ts)    d acc = drawInterior ts d ((makeRectangle p d black):acc)
+
+{- makeRectangle p d c
+   PRE:       p must be valid coordinates.
+   POST:      A rectangle of size d, color c on position p
+   EXAMPLES:  makeRectangle ==
+-}
+makeRectangle :: (Float, Float) -> Float -> Color -> Picture
+makeRectangle p d c = translateAndColor p d c (rectangleSolid d d)
+{- translateAndColor p d c s
+   PRE:       p must be valid coordinates
+   POST:      Shape s positioned correctly based on p and d with color c.
+   EXAMPLES:  translateAndColor ==
+-}
+translateAndColor :: (Float, Float) -> Float -> Color -> Picture -> Picture
+translateAndColor p d c = (setCoordinates p d) . color c
 
 {- setCoordinates (x, y) d p
    PRE:       True
