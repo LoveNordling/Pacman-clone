@@ -5,9 +5,8 @@ module Tile(Actor(..), Tile(..), generateBoard, Position, Board) where
 
 data Actor = Void | Player | Computer deriving (Show, Eq)
 -- Top, left, bottom, right
-data Tile = Tile (Bool, Bool, Bool, Bool) Actor deriving (Show, Eq)
+data Tile = Tile Position (Bool, Bool, Bool, Bool) Actor deriving (Show, Eq)
 
-type Coords    = (Int,Int)
 type Position  = (Float, Float)
 type Board     = [(Position, Tile)]
 

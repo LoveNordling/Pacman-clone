@@ -1,90 +1,94 @@
 import Tile
 import Test.HUnit
+import Debug.Trace
 import Data.Maybe
-type Coords = (Int, Int)
-type TileTuple = (Coords, Tile)
+import PriorityQueue
+
 type Path' = [Coords]
+type Coords = (Float, Float)
 
-testMap :: [TileTuple]
-testMap = [((0,0), Tile (True, True, False, False) Void), ((0,1), Tile (True, False, True, True) Void), ((1,0), Tile (False, True, True, True) Void)]
+astar :: [Tile] -> Coords -> Tile -> PriorityQueue Tile -> [Tile] -> Path'
+astar board goal current open closed
+  | goal == tileCoords current = [goal]
+  | otherwise                  = let
+                                   closed' = current:closed
+                                   ns = filterTiles (neighbours current board) closed -- läs in alla grannar och filtrera bort redan besökta
+                                   i = map (distanceToGoal goal) ns                   -- ta reda på deras avstånd till målet
+                                   open' = foldl addToOpenList open (zip i ns)        -- lägg till i open
+                                 in
+                                   astar board goal (fst $ least open') open' closed' -- upprepa, måste komma på hur jag branchar denna. kanske med en stack som kan backtracka om man når basfallet utan att ha hittat målet. Fan, måste få in travel cost här också. Iofs bara att räkna uppåt eftersom avståndet redan är där. 
+                                      
 
-testTile :: TileTuple
-testTile = ((0,0), Tile (True, True, False, False) Void)
-
-findGoal :: TileTuple -> TileTuple  -> [TileTuple] ->  [TileTuple] -> [(Int, TileTuple)]-> Maybe Path'
-findGoal (currentPos, currentTile) (goalPos, goalTile) board closed open
-  | currentPos == goalPos = Just [(0,0)]
-  | otherwise             = undefined
-
-{- neighbours (x, y) ts
-   POST: All neighbouring tiles for the tile at coordinate (x, y)
-   EXAMPLES: neigbours (1,1) (Tile (True, True, True, False) Void) [(2,1), Tile (True, False, True, True) Void)] = [Just ((Tile (True, False, True, True) Void))]
+{- neighbours current board
+   POST: [All neigbouring tiles to current]
 -}                            
-neighbours :: Coords -> Tile -> [TileTuple] -> Coords-> [(Int, TileTuple)]
-neighbours (x,y) t board goalCoords =
-  let
-    ns = neighboursAux (x, y) t board
-    dist = map (distanceToGoal goalCoords) ns
-  in
-    zip dist ns 
 
-neighboursAux :: Coords -> Tile-> [TileTuple] -> [TileTuple]
-neighboursAux (x,y) (Tile (t, l, b ,r) _) board =
+
+neighbours :: Tile-> [Tile] -> [Tile]
+neighbours (Tile (x,y) (t, l, b ,r) _) board = 
   let
     left   = neighbour l (x-1, y  ) board
     right  = neighbour r (x+1, y  ) board
     top    = neighbour t (x  , y-1) board
     bottom = neighbour b (x  , y+1) board
     
-    neighbour :: Bool -> Coords -> [TileTuple] -> Maybe TileTuple
-    neighbour _ _  []  = Nothing -- basfall, tom plan
-    neighbour True _ _ = Nothing -- är boolen true är det en vägg ivägen
-    neighbour b (x, y) (((x',y'), t):xs) 
-      | x==x' && y==y' = Just ((x, y),t)  -- koordinaten vi söker
-      | otherwise      = neighbour b (x, y) xs -- annars rekuresera
+    neighbour :: Bool -> Coords -> [Tile] -> Maybe Tile
+    neighbour _ _  []  = Nothing                             -- basfall, tom plan
+    neighbour True _ _ = Nothing                             -- är boolen true är det en vägg ivägen
+    neighbour b (x, y) ((Tile (x',y') bools act):xs) 
+      | x==x' && y==y' = Just (Tile (x',y') bools act)       -- koordinaten vi söker
+      | otherwise      = neighbour b (x, y) xs               -- annars rekuresera
   in
-    map fromJust $ filter isJust [left, right, top, bottom]  --filtrerar bort Nothings och lyfter ur alla "Just v" till "v"
+    map fromJust $ filter isJust [left, right, top, bottom]  -- filtrerar bort Nothings och lyfter ur alla "Just v" till "v"
 
 
 
-    
-distanceToGoal :: Coords -> TileTuple -> Int
-distanceToGoal (x,y) ((x',y'),_) = (abs (x'-x)) + (abs(y'-y))
-
-{- filterClosedNeighbours closed ns
-   POST: all elements in ns not present in closed
+{- filterTiles a b
+   POST: all elements in a that are not in b
 -}
-filterClosedNeighbours :: [TileTuple] -> [TileTuple] -> [TileTuple]
-filterClosedNeighbours closed ns = filter (`notElem` closed) ns
+filterTiles :: [Tile] -> [Tile] -> [Tile]
+filterTiles tiles filterList = filter (`notElem` filterList) tiles
+
+{- distancetoGoal (x,y) tile
+   POST: number of moves required to reach t
+-}
+distanceToGoal :: Coords -> Tile -> Float
+distanceToGoal (x,y) tile = let (x',y') = tileCoords tile in (abs (x'-x)) + (abs(y'-y))
 
 
-{- openListPop stack
+tileCoords :: Tile -> Coords
+tileCoords (Tile (x,y) _ _) = (x,y)
+
+{- pop stack
    POST: (head of stack, rest of stack)
 -}
-openListPop :: [TileTuple] -> (TileTuple,[TileTuple])
-openListPop [] = error "Empty stack"
-openListPop [t] = (t, [])
-openListPop ts = (head ts, tail ts)
+pop :: [a] -> (a,[a])
+pop [] = error "Empty stack"
+pop [t] = (t, [])
+pop ts = (head ts, tail ts)
 
-addToClosedList :: TileTuple -> [TileTuple] -> [TileTuple]
-addToClosedList t ts = t:ts
+{- push x stack
+   POST: x prepended to stack
+ -}
+push :: a -> [a] -> [a]
+push a as = a:as
 
 {- removeFromOpenList t openlist
    POST: openlist with t removed
 -}
-removeFromOpenList :: TileTuple -> [TileTuple] -> [TileTuple]
-removeFromOpenList t []     = []
-removeFromOpenList t (x:xs)
-  | t==x                    = xs
-  | otherwise               = x:removeFromOpenList t xs
+removeFromOpenList :: (Float, Tile) -> PriorityQueue Tile -> PriorityQueue Tile
+removeFromOpenList t pq
+  | PriorityQueue.exists pq t = PriorityQueue.remove pq t
+  | otherwise                 = pq
 
-addToOpenList ::  [(Int, TileTuple)] -> (Int, TileTuple) -> [(Int, TileTuple)]
-addToOpenList [] (n, t) = [(n,t)]
-addToOpenList ((n',t'):xs) (n, t)
-  | n<n' = (n,t):(n',t'):xs
-  | otherwise = (n',t'):addToOpenList xs (n,t)
-        
+addToOpenList ::    PriorityQueue Tile -> (Float, Tile) -> PriorityQueue Tile
+addToOpenList pq t = PriorityQueue.insert pq t
 
-
-
-
+test1 = let
+         current = Tile (0.0,0.0) (True, True, True,False) Void
+         board =   [Tile (0.0,0.0) (True,True,True, False) Void,
+                    Tile (1.0,0.0) (True, False, True, False) Void,
+                    Tile (2.0,0.0) (True, False, True, True) Void]
+         in
+           TestCase $ assertEqual "neighbours"
+           ([Tile (1.0,0.0) (True, False, True, False) Void]) (neighbours current board)

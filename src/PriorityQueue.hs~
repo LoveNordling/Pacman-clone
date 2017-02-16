@@ -1,0 +1,6 @@
+data PriorityQueue a = [(Int, a)]
+
+insert :: PriorityQueue a -> a -> PriorityQueue a
+insert [] a = [a]
+insert ((n1, v1):pq) (n2, v2)
+  | n1>n2 = (n1, v1):insert pq (n2,v2)
