@@ -1,51 +1,36 @@
 module Main where
-import Graphic
+import Graphics.Gloss
+import Graphics.Gloss.Interface.Pure.Game
+import GraphicsEngine
+import GameEngine
 import Tile
 
--- data Actor = Void | Player | Computer
--- -- Top, left, bottom, right
--- data Tile = Tile (Bool, Bool, Bool, Bool) Actor
+-- Add tuples, this perhaps should be in a different module
+-- but I don't know how to export an instance?
+instance (Num a, Num b) => Num (a, b) where
+  (a, b) + (c, d) = (a+c, b+d)
+  (a, b) - (c, d) = (a-c, b-d)
+  (a, b) * (c, d) = (a*c, b*d)
+  abs (a, b)      = (abs a, abs b)
+  signum (a, b)   = (signum a, signum b)
+  fromInteger a   = (fromInteger a, fromInteger a)
 
--- roten ur antalet tiles måste vara ojämnt
+-- The initial state of the game
+state :: GameState
+state = State standardTiles (Player (-6, 6)) Void
 
-tiles :: Board
-tiles = Tile.generateBoard loveTiles
-{-
+-- The window used by Gloss
+window :: Display
+window = InWindow "DazzleBox" (1000, 1000) (0, 0)
+
+-- The background color of the window
+backgroundColor :: Color
+backgroundColor = white
+
+{- main
+   PRE:       True
+   POST:      An instance of the The Game.
+   EXAMPLES:  main ==
 -}
-loveTiles = [[Tile (True, True, True, False) Void, Tile (True, False, False, True) Void, Tile (True, True, False, True) Void], [Tile (True, True, True, False) Void, Tile (False, False, False, True) Void, Tile (False, True, False, True) Void], [Tile (True, True, True, False) Void, Tile (False, False, True, False) Void, Tile (False, False, True, True) Void]]
-
---
--- tiles = [
---   ((-2, 2), Tile (True, True, True, False) Void) ,
---   ((-1, 2), Tile (True, False, False, True) Void) ,
---   ((0, 2), Tile (True, False, False, True) Void) ,
---   ((1, 2), Tile (True, True, False, True) Void) ,
---   ((2, 2), Tile (True, True, False, True) Void) ,
---
---   ((-2, 1), Tile (True, True, True, False) Void) ,
---   ((-1, 1), Tile (True, False, False, True) Void) ,
---   ((0, 1), Tile (True, False, False, True) Void) ,
---   ((1, 1), Tile (True, True, False, True) Void) ,
---   ((2, 1), Tile (True, True, False, True) Void) ,
---
---   ((-2, 0), Tile (True, True, True, False) Void) ,
---   ((-1, 0), Tile (True, False, False, True) Void) ,
---   ((0, 0), Tile (True, False, False, True) Void) ,
---   ((1, 0), Tile (True, True, False, True) Void) ,
---   ((2, 0), Tile (True, True, False, True) Void) ,
---
---   ((-2, -1), Tile (True, True, True, False) Void) ,
---   ((-1, -1), Tile (True, False, False, True) Void) ,
---   ((0, -1), Tile (True, False, False, True) Void) ,
---   ((1, -1), Tile (True, True, False, True) Void) ,
---   ((2, -1), Tile (True, True, False, True) Void) ,
---
---   ((-2, -2), Tile (True, True, True, False) Void) ,
---   ((-1, -2), Tile (True, False, False, True) Void) ,
---   ((0, -2), Tile (True, False, False, True) Void) ,
---   ((1, -2), Tile (True, True, False, True) Void) ,
---   ((2, -2), Tile (True, True, False, True) Void)
---   ]
-
 main :: IO ()
-main = Graphic.renderMap tiles
+main = play window white 60 state GraphicsEngine.render GameEngine.handleKeyEvents GameEngine.update
