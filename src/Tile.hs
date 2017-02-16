@@ -9,8 +9,57 @@ data Actor = Void | Player (Float, Float) | Computer (Float, Float)
 data Direction = Up | Down | Left | Right
 data Tile = Floor (Float, Float) [Direction] | Wall (Float, Float)
 data GameState = State [Tile] Actor Actor
+type Board = [Tile]
 
-standardTiles = [
+baseFloor = Floor (0, 0) [] 
+baseWall = Wall (0, 0)
+
+
+
+{-
+	generateBoard x
+	PURPOSE: to generate a board with tile coordinates from x
+	Pre: True
+	Post: A Board based on the list of list of tiles
+-}
+generateBoard :: [[Tile]] -> Board
+generateBoard t@(x:xs) = generateBoardAux t (-(fromIntegral (length x))/2) ((fromIntegral (length t))/2)
+
+generateBoardAux :: [[Tile]] -> Float -> Float -> Board
+generateBoardAux [] _ _ = []
+generateBoardAux (t:ts) x y = (generateBoardRow t x y) ++ generateBoardAux ts x (y-1)
+
+generateBoardRow :: [Tile] -> Float -> Float -> Board
+generateBoardRow [] _ _ = []
+generateBoardRow ((Floor (_, _) _):ts) x y = (Floor (x, y) []) : (generateBoardRow ts (x+1) y)
+generateBoardRow ((Wall (_, _)):ts) x y = (Wall (x, y)) : (generateBoardRow ts (x+1) y)
+
+
+standardTiles = generateBoard hardCodedTiles
+
+hardCodedTiles = 
+	[
+	[baseWall , baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall],
+	[baseWall, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseWall],
+	[baseWall, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseWall],
+	[baseWall, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseWall],
+	[baseWall, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseWall],
+	[baseWall, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseWall],
+	[baseWall, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseWall],
+	[baseWall, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseWall],
+	[baseWall, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseWall],
+	[baseWall, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseWall],
+	[baseWall, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseWall],
+	[baseWall, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseWall],
+	[baseWall, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseWall],
+	[baseWall, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseWall],
+	[baseWall, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseWall],
+	[baseWall , baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall]
+	]
+
+{-
+ArdiTiles = 
+[
   Floor (-6, 6) [],
   Floor (-5, 6) [],
   Floor (-4, 6) [],
@@ -193,3 +242,4 @@ standardTiles = [
   Floor (5, -6) [],
   Floor (6, -6) []
   ]
+-}
