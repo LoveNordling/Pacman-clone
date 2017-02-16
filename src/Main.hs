@@ -12,7 +12,12 @@ tiles :: Board
 tiles = Tile.generateBoard loveTiles
 {-
 -}
-loveTiles = [[Tile (True, True, True, False) Void, Tile (True, False, False, True) Void, Tile (True, True, False, True) Void], [Tile (True, True, True, False) Void, Tile (False, False, False, True) Void, Tile (False, True, False, True) Void], [Tile (True, True, True, False) Void, Tile (False, False, True, False) Void, Tile (False, False, True, True) Void]]
+loveTiles = [
+    [Tile (True, True, True, False) Void, Tile (True, False, False, True) Void, Tile (True, True, False, True) Void],
+    [Tile (True, True, True, False) Void, Tile (False, False, False, True) Void, Tile (False, True, False, True) Void],
+    [Tile (True, True, False, False) Void, Tile (False, False, True, False) Void, Tile (False, False, True, True) Void],
+    [Tile (False, True, True, False) Void, Tile (True, False, True, False) Void, Tile (True, False, True, True) Void]
+    ]
 
 --
 -- tiles = [

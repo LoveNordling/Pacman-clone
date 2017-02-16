@@ -147,4 +147,4 @@ drawMap b dimension = Pictures (generateMapElements b ([], []))
    EXAMPLES:  generateWindow ==
 -}
 renderMap :: Board -> IO()
-renderMap tiles = display (window 1000 1000) background (drawMap tiles (tileDimensions (length tiles)))
+renderMap b = display (window 1000 1000) background (drawMap b (tileDimensions (length b)))
