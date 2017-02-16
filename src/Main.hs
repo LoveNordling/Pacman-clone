@@ -1,8 +1,11 @@
 module Main where
 import Graphics.Gloss
 import Graphics.Gloss.Interface.Pure.Game
-import GraphicsEngine
-import GameEngine
+import qualified Core.GraphicsEngine as GraphicsEngine
+import qualified Core.GameEngine as GameEngine
+import Core.Board.Tile
+import Core.Board.Board
+import Core.Board.Actor
 import Tile
 
 -- Add tuples, this perhaps should be in a different module
@@ -33,4 +36,4 @@ backgroundColor = white
    EXAMPLES:  main ==
 -}
 main :: IO ()
-main = play window white 60 state GraphicsEngine.render GameEngine.handleKeyEvents GameEngine.update
+main = play window white 2 state GraphicsEngine.render GameEngine.handleKeyEvents GameEngine.step

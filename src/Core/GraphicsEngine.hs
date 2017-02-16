@@ -1,8 +1,11 @@
-module GraphicsEngine (render) where
+module Core.GraphicsEngine (render, tileSize) where
 import Graphics.Gloss
 import Graphics.Gloss.Interface.Pure.Game
+import Core.Board.Tile
+import Core.Board.Board
+import Core.Board.Actor
+import Debug.Trace
 import Tile
-
 -- TODO: Should be in main.hs?
 -- The size of the map
 mapSize :: Int
@@ -21,7 +24,7 @@ tileSize n = 10 * sqrt (fromIntegral (mapSize) / fromIntegral (n))
    POST:          The image to be displayed, based on t with entities p and c.
    EXAMPLES:      render ==
 -}
-drawMap :: [Tile] -> Actor -> Actor -> Picture
+drawMap :: Board -> Actor -> Actor -> Picture
 drawMap t p c =
   let dimensions = tileSize (length t)
       interior   = drawInterior t dimensions []
@@ -43,7 +46,7 @@ drawMap t p c =
          EXAMPLES:  drawInterior ==
          VARIANT:   |t|
       -}
-      drawInterior :: [Tile] -> Float -> [Picture] -> [Picture]
+      drawInterior :: Board -> Float -> [Picture] -> [Picture]
       drawInterior []               d acc = acc
       drawInterior ((Floor p _):ts) d acc = drawInterior ts d ((makeRectangle p d red):acc)
       drawInterior ((Wall p):ts)    d acc = drawInterior ts d ((makeRectangle p d black):acc)

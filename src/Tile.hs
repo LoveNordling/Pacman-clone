@@ -1,20 +1,18 @@
-module Tile(Actor(..), Tile(..), GameState(..), Direction(..), standardTiles) where
-import Prelude hiding(Right, Left)
+module Tile(Board, GameState(..), standardTiles) where
+
+import Core.Board.Actor
+import Core.Board.Tile
+
 -- Suppress HLint messages
 {-# ANN module "HLint: Ignore Use mappend" #-}
 
 -- TODO: Write representation convention
 
-data Actor = Void | Player (Float, Float) | Computer (Float, Float)
-data Direction = Up | Down | Left | Right
-data Tile = Floor (Float, Float) [Direction] | Wall (Float, Float)
 data GameState = State [Tile] Actor Actor
 type Board = [Tile]
 
-baseFloor = Floor (0, 0) [] 
+baseFloor = Floor (0, 0) []
 baseWall = Wall (0, 0)
-
-
 
 {-
 	generateBoard x
@@ -22,7 +20,7 @@ baseWall = Wall (0, 0)
 	Pre: True
 	Post: A Board based on the list of list of tiles
 -}
-generateBoard :: [[Tile]] -> Board
+generateBoard :: [Board] -> Board
 generateBoard t@(x:xs) = generateBoardAux t (-(fromIntegral (length x))/2) ((fromIntegral (length t))/2)
 
 generateBoardAux :: [[Tile]] -> Float -> Float -> Board
@@ -37,7 +35,7 @@ generateBoardRow ((Wall (_, _)):ts) x y = (Wall (x, y)) : (generateBoardRow ts (
 
 standardTiles = generateBoard hardCodedTiles
 
-hardCodedTiles = 
+hardCodedTiles =
 	[
 	[baseWall , baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall],
 	[baseWall, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseFloor, baseWall],
@@ -58,7 +56,7 @@ hardCodedTiles =
 	]
 
 {-
-ArdiTiles = 
+ArdiTiles =
 [
   Floor (-6, 6) [],
   Floor (-5, 6) [],
