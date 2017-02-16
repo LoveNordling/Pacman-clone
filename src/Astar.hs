@@ -7,22 +7,12 @@ import PriorityQueue
 type Path' = [Coords]
 type Coords = (Float, Float)
 
-astar :: [Tile] -> Coords -> Tile -> PriorityQueue Tile -> [Tile] -> Path'
-astar board goal current open closed
-  | goal == tileCoords current = [goal]
-  | otherwise                  = let
-                                   closed' = current:closed
-                                   ns = filterTiles (neighbours current board) closed -- läs in alla grannar och filtrera bort redan besökta
-                                   i = map (distanceToGoal goal) ns                   -- ta reda på deras avstånd till målet
-                                   open' = foldl addToOpenList open (zip i ns)        -- lägg till i open
-                                 in
-                                   astar board goal (fst $ least open') open' closed' -- upprepa, måste komma på hur jag branchar denna. kanske med en stack som kan backtracka om man når basfallet utan att ha hittat målet. Fan, måste få in travel cost här också. Iofs bara att räkna uppåt eftersom avståndet redan är där. 
-                                      
+astar :: [Tile] -> Coords -> Tile -> PriorityQueue Tile -> [Tile] -> Path' -> Path' 
+astar a b c d e f = undefined
 
 {- neighbours current board
    POST: [All neigbouring tiles to current]
 -}                            
-
 
 neighbours :: Tile-> [Tile] -> [Tile]
 neighbours (Tile (x,y) (t, l, b ,r) _) board = 
@@ -92,3 +82,4 @@ test1 = let
          in
            TestCase $ assertEqual "neighbours"
            ([Tile (1.0,0.0) (True, False, True, False) Void]) (neighbours current board)
+
