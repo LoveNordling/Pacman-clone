@@ -5,7 +5,7 @@ module Tile(Actor(..), Tile(..), generateBoard, Position, Board) where
 
 data Actor = Void | Player | Computer
 -- Top, left, bottom, right
-data Tile = Tile (Bool, Bool, Bool, Bool) Actor
+data Tile = Tile (Float, Float) (Bool, Bool, Bool, Bool) Actor | Floor | Wall
 
 type Position  = (Float, Float)
 type Board     = [(Position, Tile)]
