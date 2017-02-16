@@ -23,18 +23,18 @@ tileSize n = 10 * sqrt (fromIntegral (mapSize) / fromIntegral (n))
 -}
 drawMap :: [Tile] -> Actor -> Actor -> Picture
 drawMap t p c =
-  let d = tileSize (length t)
-      i = drawInterior t d []
-      p = drawActor p d
-      c = drawActor c d
-  in  Pictures [i, p, c] --((drawInterior t d []) ++ [(drawActor p d)])
+  let dimensions = tileSize (length t)
+      interior   = drawInterior t dimensions []
+      user       = [drawActor p dimensions]
+      ghost      = [drawActor c dimensions]
+  in  Pictures (interior ++ user ++ ghost) --((drawInterior t d []) ++ [(drawActor p d)])
     where
       {- drawActor a f
          PRE:       True
          POST:      The actors a to be displayed.
          EXAMPLES:  drawActor ==
       -}
-      drawActors :: Actor -> Float -> [Picture]
+      drawActor :: Actor -> Float -> Picture
       drawActor (Player p)   d = translateAndColor p d blue (circle 5)
       drawActor (Computer p) d = translateAndColor p d green (circle 5)
       {- drawInterior t f acc
