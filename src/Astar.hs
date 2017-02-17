@@ -1,85 +1,71 @@
 import Tile
-import Test.HUnit
 import Debug.Trace
 import Data.Maybe
-import PriorityQueue
 
-type Path' = [Coords]
-type Coords = (Float, Float)
 
-astar :: [Tile] -> Coords -> Tile -> PriorityQueue Tile -> [Tile] -> Path' -> Path' 
-astar a b c d e f = undefined
+type ValidPathsFunc = (Grid -> Position -> Path)
+type CostFunc       = (Position -> Path -> Float)
+type Grid = [[Tile]]
+type Path = [Position]
+{-
+  F F W F
+  F W W F
+  F F F F
+  W W W W-}
+testBoard :: Grid
+testBoard = [[Tile (0.0,0.0) Floor Void, Tile (0.0,1.0) Floor Void, Tile (0.0,2.0) Wall Void, Tile (0.0,3.0) Floor Void],
+             [Tile (1.0,0.0) Floor Void, Tile (1.0,1.0) Wall Void, Tile (1.0,2.0) Wall Void,  Tile (1.0,3.0) Floor Void],
+             [Tile (2.0,0.0) Floor Void, Tile (2.0,1.0) Floor Void, Tile (2.0,2.0) Floor Void, Tile (2.0,3.0) Floor Void],
+             [Tile (3.0,0.0) Wall Void, Tile (3.0,1.0) Wall Void, Tile (3.0,2.0) Wall Void, Tile (3.0,3.0) Wall Void]]
 
-{- neighbours current board
-   POST: [All neigbouring tiles to current]
--}                            
 
-neighbours :: Tile-> [Tile] -> [Tile]
-neighbours (Tile (x,y) (t, l, b ,r) _) board = 
-  let
-    left   = neighbour l (x-1, y  ) board
-    right  = neighbour r (x+1, y  ) board
-    top    = neighbour t (x  , y-1) board
-    bottom = neighbour b (x  , y+1) board
+{- aStar grid goal pos vpf cf
+   PRE: grid contains a Tile with coordinates goal and coordinates pos
+   POST: 
+   SIDE EFFECTS: none
+   EXAMPLES:
+-}
+aStar :: Grid -> Position -> Position -> ValidPathsFunc -> CostFunc -> Path
+aStar grid goal pos vpf cf = head $ aStarAux grid goal vpf cf [[pos]]
+
+aStarAux :: Grid -> Position -> ValidPathsFunc -> CostFunc -> [Path] -> [Path]
+aStarAux grid goal vpf cf paths
+  | any (\p -> last p == goal) paths = filter (\p -> last p == goal) paths
+  | otherwise                        = let
+                                         best = snd $ minimum $ zip (map (cf goal) paths) paths
+                                         pb = addRoutes grid paths best vpf
+                                       in
+                                         aStarAux grid goal vpf cf $ filter (/= best) paths ++ pb
+
+addRoutes :: Grid -> [Path] -> Path -> ValidPathsFunc -> [Path]
+addRoutes grid paths path vpf = let
+                               cpaths = concat paths
+                             in
+                               [ path ++ [p] | p <- filter (`notElem` cpaths) $ vpf grid $ last path]
+
     
-    neighbour :: Bool -> Coords -> [Tile] -> Maybe Tile
-    neighbour _ _  []  = Nothing                             -- basfall, tom plan
-    neighbour True _ _ = Nothing                             -- är boolen true är det en vägg ivägen
-    neighbour b (x, y) ((Tile (x',y') bools act):xs) 
-      | x==x' && y==y' = Just (Tile (x',y') bools act)       -- koordinaten vi söker
-      | otherwise      = neighbour b (x, y) xs               -- annars rekuresera
-  in
-    map fromJust $ filter isJust [left, right, top, bottom]  -- filtrerar bort Nothings och lyfter ur alla "Just v" till "v"
+cost :: Position -> Path -> Float
+cost goal path = let
+                   current = last path
+                   tCost = fromIntegral (length path -1) :: Float
+                 in
+                   tCost + (distance current goal)
+
+distance :: Position -> Position -> Float
+distance (x0, y0) (x1, y1) = abs (x1-x0) + abs (y1-y0)
 
 
+validPaths :: Grid -> Position -> Path
+validPaths grid (x, y) = [(x1, y1) | x1 <- [(x-1)..(x+1)],
+                                     y1 <- [(y-1)..(y+1)],
+                                     x1 >= 0,
+                                     y1 >= 0,
+                                     x1 <  (fromIntegral (length grid) :: Float),
+                                     y1 <  (fromIntegral (length grid) :: Float),
+                                     isNotWall (grid !! round x1 !! round y1),
+                                     x-x1 ==0 || y-y1==0
+                                     ]
 
-{- filterTiles a b
-   POST: all elements in a that are not in b
--}
-filterTiles :: [Tile] -> [Tile] -> [Tile]
-filterTiles tiles filterList = filter (`notElem` filterList) tiles
-
-{- distancetoGoal (x,y) tile
-   POST: number of moves required to reach t
--}
-distanceToGoal :: Coords -> Tile -> Float
-distanceToGoal (x,y) tile = let (x',y') = tileCoords tile in (abs (x'-x)) + (abs(y'-y))
-
-
-tileCoords :: Tile -> Coords
-tileCoords (Tile (x,y) _ _) = (x,y)
-
-{- pop stack
-   POST: (head of stack, rest of stack)
--}
-pop :: [a] -> (a,[a])
-pop [] = error "Empty stack"
-pop [t] = (t, [])
-pop ts = (head ts, tail ts)
-
-{- push x stack
-   POST: x prepended to stack
- -}
-push :: a -> [a] -> [a]
-push a as = a:as
-
-{- removeFromOpenList t openlist
-   POST: openlist with t removed
--}
-removeFromOpenList :: (Float, Tile) -> PriorityQueue Tile -> PriorityQueue Tile
-removeFromOpenList t pq
-  | PriorityQueue.exists pq t = PriorityQueue.remove pq t
-  | otherwise                 = pq
-
-addToOpenList ::    PriorityQueue Tile -> (Float, Tile) -> PriorityQueue Tile
-addToOpenList pq t = PriorityQueue.insert pq t
-
-test1 = let
-         current = Tile (0.0,0.0) (True, True, True,False) Void
-         board =   [Tile (0.0,0.0) (True,True,True, False) Void,
-                    Tile (1.0,0.0) (True, False, True, False) Void,
-                    Tile (2.0,0.0) (True, False, True, True) Void]
-         in
-           TestCase $ assertEqual "neighbours"
-           ([Tile (1.0,0.0) (True, False, True, False) Void]) (neighbours current board)
-
+isNotWall :: Tile -> Bool
+isNotWall (Tile _ Floor _) = True
+isNotWall (Tile _ Wall _)  = False
