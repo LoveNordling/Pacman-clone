@@ -20,7 +20,7 @@ instance (Num a, Num b) => Num (a, b) where
 
 -- The initial state of the game
 state :: GameState
-state = State standardTiles (Player (-6, 6)) (Computer (0, 0))
+state = State standardTiles (Player (-6, 6) (0,0)) (Computer (0, 0))
 
 -- The window used by Gloss
 window :: Display
@@ -36,4 +36,4 @@ backgroundColor = white
    EXAMPLES:  main ==
 -}
 main :: IO ()
-main = play window white 2 state GraphicsEngine.render GameEngine.handleKeyEvents GameEngine.step
+main = play window white 60 state GraphicsEngine.render GameEngine.handleKeyEvents GameEngine.step
