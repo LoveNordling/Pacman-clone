@@ -11,7 +11,7 @@ import Core.Board.Tile
 data GameState = State [Tile] Actor Actor
 type Board = [Tile]
 
-baseFloor = Floor (0, 0) []
+baseFloor = Floor (0, 0)
 baseWall = Wall (0, 0)
 
 {-
@@ -29,8 +29,8 @@ generateBoardAux (t:ts) x y = (generateBoardRow t x y) ++ generateBoardAux ts x 
 
 generateBoardRow :: [Tile] -> Float -> Float -> Board
 generateBoardRow [] _ _ = []
-generateBoardRow ((Floor (_, _) _):ts) x y = (Floor (x, y) []) : (generateBoardRow ts (x+1) y)
-generateBoardRow ((Wall (_, _)):ts) x y = (Wall (x, y)) : (generateBoardRow ts (x+1) y)
+generateBoardRow ((Floor _):ts) x y = (Floor (x, y)) : (generateBoardRow ts (x+1) y)
+generateBoardRow ((Wall _):ts) x y = (Wall (x, y)) : (generateBoardRow ts (x+1) y)
 
 
 standardTiles = generateBoard hardCodedTiles

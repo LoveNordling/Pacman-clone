@@ -9,15 +9,7 @@ module Core.Board.Tile (Tile(..), Direction(..)) where
     Tiles cannot have overlapping positions.
 
 -}
-data Tile = Floor (Float, Float) [Direction] | Wall (Float, Float)
-
-{-
-  REPRESENTATION CONVENTION:
-
-  REPRESENTATION INVARIANT:
-    None
--}
-data Direction = Void --Up | Down | Left | Right
+data Tile = Floor (Float, Float) | Wall (Float, Float)
 
 {- position a
    PRE:       True
@@ -25,5 +17,5 @@ data Direction = Void --Up | Down | Left | Right
    EXAMPLES:  position (Floor (1, 1)) == (1, 1)
 -}
 position :: Tile -> (Float, Float)
-position (Floor a _) = a
+position (Floor a) = a
 position (Wall a)  = a

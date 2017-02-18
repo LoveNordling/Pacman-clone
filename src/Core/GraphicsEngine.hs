@@ -47,9 +47,9 @@ drawMap t p c =
          VARIANT:   |t|
       -}
       drawInterior :: Board -> Float -> [Picture] -> [Picture]
-      drawInterior []               d acc = acc
-      drawInterior ((Floor p _):ts) d acc = drawInterior ts d ((makeRectangle p d red):acc)
-      drawInterior ((Wall p):ts)    d acc = drawInterior ts d ((makeRectangle p d black):acc)
+      drawInterior []             d acc = acc
+      drawInterior ((Floor p):ts) d acc = drawInterior ts d ((makeRectangle p d red):acc)
+      drawInterior ((Wall p):ts)  d acc = drawInterior ts d ((makeRectangle p d black):acc)
 
 {- makeRectangle p d c
    PRE:       p must be valid coordinates.
