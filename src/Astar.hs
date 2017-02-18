@@ -1,12 +1,6 @@
 import Data.List
 import qualified Test.HUnit as T
-import Tile
 
-{-
-type Board = [Tile]
-type Position = (Float, Float)
-type Path = [Position]
-type PossiblePath = (Int, Path)-}
 
 {-
  F W W F F
@@ -19,31 +13,56 @@ type PossiblePath = (Int, Path)-}
 
 
 board :: Board
-board = [Floor (-2,-2), Wall (-1,-2), Wall (0,-2), Floor (1,-2), Floor (2,-2),
-         Floor (-2,-1), Wall (-1,-1), Wall (0,-1), Floor (1,-1), Wall (2,-1),
+board = [Floor (-2,2), Wall (-1,2), Wall (0,2), Floor (1,2), Floor (2,2),
+         Floor (-2,1), Wall (-1,1), Wall (0,1), Floor (1,1), Wall (2,1),
          Floor (-2,0), Floor (-1,0), Floor (0,0), Floor (1,0), Wall (2,0),
-         Wall (-2,1), Floor (-1,1), Wall (0,1), Floor (1,1), Floor (2,1),
-         Floor (-2,2), Floor (-1,2), Wall (0,2), Wall (1,2), Wall (2,2) ]
+         Wall (-2,-1), Floor (-1,-1), Wall (0,-1), Floor (1,-1), Floor (2,-1),
+         Floor (-2,-2), Floor (-1,-2), Wall (0,-2), Wall (1,-2), Wall (2,-2) ]
 
-findNeighbour (x, y) =
-  [ (a, b) | a <- [(x-1)..(x+1)], b <- [(y-1)..(y+1)], satisfy (x, y) (a,b) ]
+{- validCoordinates (x, y)
+   PRE: True
+   POST: all coordinates (x0, y0) that are neighbours (top, down, bottom, left) to (x, y) and on the board.
+   SIDE EFFECTS: none
+   EXAMPLES: findNeighbour (0,0) = [(0,1),(-1,0),(0,-1),(1,0)]
+-}
+validCoordinates :: Position -> [Position]
+validCoordinates (x, y) =
+  [ (a, b) | a <- [(x-1)..(x+1)], b <- [(y-1)..(y+1)], satisfy (x, y) (a, b) ]
 
+{- satisfy (a,b) (c,d)
+   PRE: True
+   POST: True if and only if -3 < (c, d) < 3 and either c==a OR d==b.
+   SIDE EFFECTS: none
+   EXAMPLES:
+-}
 satisfy :: Position -> Position -> Bool
 satisfy (a, b) (c, d) =
-  c > (-3) && c < 3 && d > (-3) && d < 3 && not ((c==a && d == b)) &&(c-a == 0 || d-b ==0)
+  c > (-3) && c < 3 && d > (-3) && d < 3 && not ((c == a && d == b)) &&(c-a == 0 || d-b == 0)
 
+{- adjFloors current board
+   PRE:
+   POST: all neigbouring floors to current under board
+   SIDE EFFECTS: none
+   EXAMPLES: 
+-}
+adjFloors :: Position -> Board -> [(Float, Float)]
+adjFloors current board = filter (isValidMove board) $ validCoordinates current
 
-newPaths :: Position -> Board -> [(Float, Float)]
-newPaths current p =
-  let
-    n  = findNeighbour current
-    n' = filter (isValidMove p) n
-  in
-    n'
-
+{- distance pos1 pos2
+   PRE:
+   POST: the manhattan distance between pos1 and pos2
+   SIDE EFFECTS: none
+   EXAMPLES:
+-}
 distance :: Position -> Position -> Float
 distance (x0, y0) (x1, y1) = abs (x1-x0) + abs (y1-y0)
 
+{- cost goal path
+   PRE:
+   POST: the total estimated cost for path to reach goal
+   SIDE EFFECTS: none
+   EXAMPLES.
+-}
 cost :: Position -> Path -> Float
 cost goal path = let
                    current = last path
@@ -51,23 +70,23 @@ cost goal path = let
                  in
                    steps + (distance current goal)
 
-{- pathLists board path
+{- newPaths board path
    PRE:
-   POST: list of all valid neighbours of the last element in path appended to path 
+   POST: list of all valid neighbours of the last element in path each appended to path 
 -}
-pathLists ::  Board -> Path -> [Path]
-pathLists board path =
+newPaths ::  Board -> Path -> [Path]
+newPaths board path =
   let
-    paths    = filter (`notElem` path) $ newPaths (last path) board
+    paths    = filter (`notElem` path) $ adjFloors (last path) board
     pathList = map (\p->path++[p]) paths
   in
     pathList
 
 {- isValidMove board pos
    PRE:
-   POST: True if and only if 
-   SIDE EFFECTS:
-   VARIANT:
+   POST: True if and only if pos is on board and is not a wall 
+   SIDE EFFECTS: none
+   VARIANT: length of board
    EXAMPLES:
 -}
 isValidMove :: Board -> Position -> Bool
@@ -89,34 +108,47 @@ costOfPaths paths goal = let
                          in
                            zip costs paths
 
-aStar :: Board -> Position -> Position -> [Path]
-aStar board goal start = aStarAux board goal [[start]]
+{- aStar board goal start
+   PRE: goal and start is on board
+   POST: the shortest path from start to goal under board
+   SIDE EFFECTS: none
+   EXAMPLES:
+-}
+aStar :: Board -> Position -> Position -> Path
+aStar board goal start = aStarAux board goal [[start]] where
   
-aStarAux :: Board -> Position -> [Path] -> [Path]
-aStarAux board goal paths
-  | any (\p -> last p == goal) paths = filter (\p-> last p == goal) paths
-  | otherwise =
-    let
-      best = snd $ minimum $ costOfPaths paths goal
-      next = pathLists board best
-    in
-      aStarAux board goal $ filter (/= best) paths ++ next
+        {- aStarAux board goal paths
+        PRE: 
+        POST: 
+        SIDE EFFECTS:
+        VARIANT:
+        EXAMPLES:
+        -}  
+        aStarAux :: Board -> Position -> [Path] -> Path
+        aStarAux board goal paths
+          | any (\p -> last p == goal) paths = head (filter (\p-> last p == goal) paths)
+          | otherwise =
+            let
+              best = snd $ minimum $ costOfPaths paths goal
+              next = newPaths board best
+            in
+              aStarAux board goal $ filter (/= best) paths ++ next
       
+{-
+ F W W F F
+ F W W F W
+ F F F F W
+ W F W F F
+ F F W W W
+-}
+
 
 test1 = let
-          goal = (2,1)
+          goal = (2,2)
           start = (-2,-2)
         in
           T.TestCase $ T.assertEqual "aStar"
-          ([[(-2.0,-2.0),(-2.0,-1.0),(-2.0,0.0),(-1.0,0.0),(0.0,0.0),(1.0,0.0),(1.0,1.0),(2.0,1.0)]])
-          (aStar board goal start)
-
-test2 = let
-          goal = (-2,2)
-          start = (2,-2)
-        in
-          T.TestCase $ T.assertEqual "aStar"
-          ([[(2.0,-2.0),(1.0,-2.0),(1.0,-1.0),(1.0,0.0),(0.0,0.0),(-1.0,0.0),(-1.0,1.0),(-1.0,2.0),(-2.0,2.0)]])
+          ([(-2.0,-2.0),(-1.0,-2.0),(-1.0,-1.0),(-1.0,0.0),(0.0,0.0),(1.0,0.0),(1.0,1.0),(1.0,2.0),(2.0,2.0)])
           (aStar board goal start)
 
 
@@ -128,5 +160,3 @@ test2 = let
 
 
 
-
-    
