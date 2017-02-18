@@ -17,7 +17,7 @@ playerSize = 5
    EXAMPLES:  step ==
 -}
 step :: Float -> GameState -> GameState
-step _ state@(State tiles p c) = 
+step _ state@(State tiles p c) =
 	let
 		state = checkPlayerCollision p tiles playerSize (Core.GraphicsEngine.tileSize (length tiles)) playerSpeed state
 	in moveActor state
@@ -84,9 +84,9 @@ stopPlayer (State t (Player p (x, y)) c) k =
   in
     State t (Player p m) c
 
-	
 
-	
+
+
 checkPlayerCollision :: Actor -> Board -> Float -> Float -> Float -> GameState -> GameState
 checkPlayerCollision _ [] _ _ _ state = state
 checkPlayerCollision p (tile:tiles) playerSize tileSize speed state =
@@ -96,51 +96,51 @@ checkPlayerCollision p (tile:tiles) playerSize tileSize speed state =
 			in checkPlayerCollision p tiles playerSize tileSize speed state
 
 	else checkPlayerCollision p tiles playerSize tileSize speed state
-	where 
-		isColide (Floor _ _) = False
+	where
+		isColide (Floor _) = False
 		isColide w = isVerticalColide p tile playerSize tileSize speed && isHorizontalColide p tile playerSize tileSize speed
 checkPlayerCollisionAux :: Tile -> Float -> Float -> Float -> GameState -> GameState
-checkPlayerCollisionAux  (Wall (wx, wy)) playerSize tileSize speed state@(State t p@(Player (px, py) (hMove, vMove)) c) = 
-	let 
+checkPlayerCollisionAux  (Wall (wx, wy)) playerSize tileSize speed state@(State t p@(Player (px, py) (hMove, vMove)) c) =
+	let
 		verticalColide :: GameState
 		verticalColide =
-			let 
+			let
 				py = wy -vMove*(playerSize/2 + tileSize/2)
 				vMove = 0
 			in (State t (Player (px, py) (hMove, vMove)) c)
 		horrizontalColide :: GameState
-		horrizontalColide = 
-			let 
+		horrizontalColide =
+			let
 				px = wx -hMove*(playerSize/2 + tileSize/2)
 				hMove = 0
 			in (State t (Player (px, py) (hMove, vMove)) c)
-	in if isVerticalColide p (Wall (wx, wy)) playerSize tileSize speed 
-		then 
+	in if isVerticalColide p (Wall (wx, wy)) playerSize tileSize speed
+		then
 			let state = verticalColide
 			in horrizontalColide
 		else horrizontalColide
 
 
-	
+
 isVerticalColide :: Actor -> Tile -> Float -> Float -> Float -> Bool
 isVerticalColide (Player (_, py) (_, vMove)) (Wall (_, wy)) playerSize tileSize speed = upColide && downColide
-	where 
-		upColide = wy + tileSize/2 > py + vMove * speed - playerSize/2 
-		downColide = wy - tileSize/2 < py + vMove * speed + playerSize/2 
-		
-isHorizontalColide :: Actor -> Tile -> Float -> Float -> Float -> Bool	
+	where
+		upColide = wy + tileSize/2 > py + vMove * speed - playerSize/2
+		downColide = wy - tileSize/2 < py + vMove * speed + playerSize/2
+
+isHorizontalColide :: Actor -> Tile -> Float -> Float -> Float -> Bool
 isHorizontalColide (Player (px, _) (hMove, _)) (Wall (wx, _)) playerSize tileSize speed = rightColide && leftColide
-	where 
-		rightColide = wx + tileSize/2 > px + hMove * speed - playerSize/2 
-		leftColide = wx - tileSize/2 < px + hMove * speed + playerSize/2 
+	where
+		rightColide = wx + tileSize/2 > px + hMove * speed - playerSize/2
+		leftColide = wx - tileSize/2 < px + hMove * speed + playerSize/2
 
 
-	
 
-		
-		
-		
-		
+
+
+
+
+
 -- movePlayer :: GameState -> SpecialKey -> GameState
 -- movePlayer (State t (Player p x) c) k =
 --   let
