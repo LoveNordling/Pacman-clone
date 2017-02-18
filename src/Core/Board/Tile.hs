@@ -1,4 +1,4 @@
-module Core.Board.Tile (Tile(..), Direction(..)) where
+module Core.Board.Tile (Tile(..)) where
 
 {-
   REPRESENTATION CONVENTION:
