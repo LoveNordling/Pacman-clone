@@ -1,11 +1,16 @@
+<<<<<<< HEAD
 module Tile(Board, GameState(..), standardTiles) where
 
 import Core.Board.Actor
 import Core.Board.Tile
+=======
+module Tile(Actor(..), Type(..), Tile(..), generateBoard, Position, Board) where
+>>>>>>> 83f1c0863a65425d813fbac41b6a2db22b102700
 
 -- Suppress HLint messages
 {-# ANN module "HLint: Ignore Use mappend" #-}
 
+<<<<<<< HEAD
 -- TODO: Write representation convention
 
 data GameState = State [Tile] Actor Actor
@@ -22,6 +27,23 @@ baseWall = Wall (0, 0)
 -}
 generateBoard :: [Board] -> Board
 generateBoard t@(x:xs) = generateBoardAux t (-(fromIntegral (length x))/2) ((fromIntegral (length t))/2)
+=======
+
+data Tile = Floor (Float, Float) | Wall (Float, Float) deriving (Show)
+
+type Position  = (Float, Float)
+type Board     = [Tile]
+type Path = [Position]
+
+{-
+	generateBoard matrix
+	PRE:
+	POST: a list of tupels of a tile as snd arg and it's position as its first
+-}
+
+generateBoard :: [[Tile]] -> Board
+generateBoard t@(x:xs) = generateBoardAux t (-(length x)//2) ((length t)//2)
+>>>>>>> 83f1c0863a65425d813fbac41b6a2db22b102700
 
 generateBoardAux :: [[Tile]] -> Float -> Float -> Board
 generateBoardAux [] _ _ = []
@@ -29,6 +51,7 @@ generateBoardAux (t:ts) x y = (generateBoardRow t x y) ++ generateBoardAux ts x 
 
 generateBoardRow :: [Tile] -> Float -> Float -> Board
 generateBoardRow [] _ _ = []
+<<<<<<< HEAD
 generateBoardRow ((Floor (_, _) _):ts) x y = (Floor (x, y) []) : (generateBoardRow ts (x+1) y)
 generateBoardRow ((Wall (_, _)):ts) x y = (Wall (x, y)) : (generateBoardRow ts (x+1) y)
 
@@ -241,3 +264,10 @@ ArdiTiles =
   Floor (6, -6) []
   ]
 -}
+=======
+generateBoardRow (t:ts) x y = ((x,y),t) : (generateBoardRow ts (x+1) y)
+
+
+(//) :: Int -> Int -> Float
+(//) a b = fromIntegral (div a b)
+>>>>>>> 83f1c0863a65425d813fbac41b6a2db22b102700

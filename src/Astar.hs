@@ -1,10 +1,14 @@
 import Data.List
 import qualified Test.HUnit as T
+<<<<<<< HEAD
 import Core.Board.Tile
 
 type Position = (Float, Float)
 type Path = [Position]
 type Board = [Tile]
+=======
+
+>>>>>>> 83f1c0863a65425d813fbac41b6a2db22b102700
 
 {-
  F W W F F
