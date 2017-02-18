@@ -2,10 +2,11 @@ import Data.List
 import qualified Test.HUnit as T
 import Tile
 
+{-
 type Board = [Tile]
 type Position = (Float, Float)
 type Path = [Position]
-type PossiblePath = (Int, Path)
+type PossiblePath = (Int, Path)-}
 
 {-
  F W W F F
