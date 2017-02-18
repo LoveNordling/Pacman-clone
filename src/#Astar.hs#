@@ -1,0 +1,96 @@
+import Tile
+import Debug.Trace
+import Data.Maybe
+import qualified Test.HUnit as T
+
+
+type ValidPathsFunc = (Grid -> Position -> Path)
+type CostFunc       = (Position -> Path -> Float)
+type Grid = [[Tile]]
+type Path = [Position]
+{-
+  F F W F
+  F W W F
+  F F F F
+  W W W W-}
+testBoard :: Grid
+testBoard = [[Floor (0,0), Floor (0.0,1.0), Wall (0.0,2.0), Floor (0.0,3.0)],
+             [Floor (1,0), Wall (1.0,1.0), Wall (1.0,2.0), Floor (1.0,3.0)],
+             [Floor (2,0), Floor (2.0,1.0), Floor (2.0,2.0), Floor (2.0,3.0)],
+             [Wall (3.0,0.0), Wall (3.0,1.0), Wall (3.0,2.0), Wall (3.0,3.0)]]
+
+
+{- aStar grid goal pos vpf cf
+   PRE:  grid contains a Tile with coordinates goal and coordinates pos
+   POST: the sequence of coordinates representing the fastest path from pos to goal
+   SIDE EFFECTS: none
+   EXAMPLES:
+-}
+aStar :: Grid -> Position -> Position -> Path
+aStar grid goal pos = head $ aStarAux grid goal [[pos]]
+
+{- aSTarAux grid goal vpf cf paths
+   PRE:
+   POST: 
+   SIDE EFFECTS: none
+   VARIANT:
+   EXAMPLES:
+-}
+aStarAux :: Grid -> Position -> [Path] -> [Path]
+aStarAux grid goal paths
+  | any (\p -> last p == goal) paths = filter (\p -> last p == goal) paths                        -- om någon sista koordinat i paths är mål-koordinaten
+                                                                                                  -- returneras den sekvensen av koordinater 
+  | otherwise                        = let
+                                         best = snd $ minimum $ zip (map (cost goal) paths) paths -- map (cf goal) paths returnerar aktuell kostnad för alla paths
+                                                                                                  -- denna zippas med sin respektive path
+                                                                                                  -- tuplen med den lägsta kostnaden plockas ut
+                                                                                                  -- och det andra elementet, dvs vägen, blir 'best'
+                                         pFromBest = addRoutes grid paths best                    -- Alla nya vägar som går från sista koordinaten i vägen "best"
+                                       in
+                                         aStarAux grid goal $ filter (/= best) paths ++ pFromBest -- 
+
+{- addRoutes grid paths path vpf
+   PRE:
+   POST:
+   SIDE EFFECTS:
+   EXAMPLES:-}
+addRoutes :: Grid -> [Path] -> Path -> [Path]
+addRoutes grid paths path = let
+                               cpaths = concat paths -- slå ihop paths till en lista
+                             in
+                               [ path ++ [p] | p <- filter (`notElem` cpaths) $ validPaths grid $ last path] -- validPaths grid $ last path returnerar alla tiles som går att nå
+                                                                                                             -- med ett steg från last path.
+                                                                                                             -- 
+    
+cost :: Position -> Path -> Float
+cost goal path = let
+                   current = last path
+                   tCost = fromIntegral (length path -1) :: Float
+                 in
+                   tCost + (distance current goal)
+
+distance :: Position -> Position -> Float
+distance (x0, y0) (x1, y1) = abs (x1-x0) + abs (y1-y0)
+
+
+validPaths :: Grid -> Position -> Path
+validPaths grid (x, y) = [(x1, y1) | x1 <- [(x-1)..(x+1)], -- alla x i rangen x-1..x+1
+                                     y1 <- [(y-1)..(y+1)], -- alla y i rangen y-1..y+1
+                                     x1 >= 0,              -- som är större eller lika med 0
+                                     y1 >= 0,              -- som är större eller lika med 0   
+                                     x1 <  (fromIntegral (length grid) :: Float),
+                                     y1 <  (fromIntegral (length grid) :: Float),
+                                     isNotWall (grid !! round x1 !! round y1),
+                                     x-x1 ==0 || y-y1==0
+                                     ]
+
+isNotWall :: Tile -> Bool
+isNotWall (Floor _) = True
+isNotWall (Wall _)  = False
+
+test1 = let goal = (0.0,3.0)
+            start = (0.0,0.0)
+         in
+           T.TestCase $ T.assertEqual ("Astar")
+           ([(0.0,0.0),(1.0,0.0),(2.0,0.0),(2.0,1.0),(2.0,2.0),(2.0,3.0),(1.0,3.0),(0.0,3.0)])
+           (aStar testBoard  goal start)
