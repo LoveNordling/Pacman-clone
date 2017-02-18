@@ -1,14 +1,10 @@
 import Data.List
 import qualified Test.HUnit as T
-<<<<<<< HEAD
 import Core.Board.Tile
 
 type Position = (Float, Float)
 type Path = [Position]
 type Board = [Tile]
-=======
-
->>>>>>> 83f1c0863a65425d813fbac41b6a2db22b102700
 
 {-
  F W W F F
@@ -17,7 +13,6 @@ type Board = [Tile]
  W F W F F
  F F W W W
 -}
-
 
 
 board :: Board
@@ -45,13 +40,14 @@ validCoordinates (x, y) =
 -}
 satisfy :: Position -> Position -> Bool
 satisfy (a, b) (c, d) =
-  c > (-3) && c < 3 && d > (-3) && d < 3 && not ((c == a && d == b)) &&(c-a == 0 || d-b == 0)
+  --c > (-3) && c < 3 && d > (-3) && d < 3 &&
+  not ((c == a && d == b)) &&(c-a == 0 || d-b == 0)
 
 {- adjFloors current board
    PRE:
    POST: all neigbouring floors to current under board
    SIDE EFFECTS: none
-   EXAMPLES: 
+   EXAMPLES:
 -}
 adjFloors :: Position -> Board -> [(Float, Float)]
 adjFloors current board = filter (isValidMove board) $ validCoordinates current
@@ -80,7 +76,7 @@ cost goal path = let
 
 {- newPaths board path
    PRE:
-   POST: list of all valid neighbours of the last element in path each appended to path 
+   POST: list of all valid neighbours of the last element in path each appended to path
 -}
 newPaths ::  Board -> Path -> [Path]
 newPaths board path =
@@ -92,7 +88,7 @@ newPaths board path =
 
 {- isValidMove board pos
    PRE:
-   POST: True if and only if pos is on board and is not a wall 
+   POST: True if and only if pos is on board and is not a wall
    SIDE EFFECTS: none
    VARIANT: length of board
    EXAMPLES:
@@ -124,24 +120,25 @@ costOfPaths paths goal = let
 -}
 aStar :: Board -> Position -> Position -> Path
 aStar board goal start = aStarAux board goal [[start]] where
-  
+
         {- aStarAux board goal paths
-        PRE: 
-        POST: 
+        PRE:
+        POST:
         SIDE EFFECTS:
         VARIANT:
         EXAMPLES:
-        -}  
+        -}
         aStarAux :: Board -> Position -> [Path] -> Path
+        aStarAux board _ [] = []
         aStarAux board goal paths
           | any (\p -> last p == goal) paths = head (filter (\p-> last p == goal) paths)
           | otherwise =
             let
-              best = snd $ minimum $ costOfPaths paths goal
+              best = snd . minimum $ costOfPaths paths goal
               next = newPaths board best
             in
               aStarAux board goal $ filter (/= best) paths ++ next
-      
+
 {-
  F W W F F
  F W W F W
@@ -159,12 +156,22 @@ test1 = let
           ([(-2.0,-2.0),(-1.0,-2.0),(-1.0,-1.0),(-1.0,0.0),(0.0,0.0),(1.0,0.0),(1.0,1.0),(1.0,2.0),(2.0,2.0)])
           (aStar board goal start)
 
-
-
-
-
-
-
-
-
-
+test2 = let
+          goal = (1,3)
+          start = (3,8)
+          tiles = [
+               Wall (0,0), Wall (1,0), Wall (2,0), Wall (3,0), Wall (4,0), Wall (5,0), Wall (6,0), Wall (7,0), Wall (8,0), Wall (9,0),
+               Wall (0,1), Floor (1,1), Floor (2,1), Floor (3,1), Wall (4,1), Wall (5,1), Floor (6,1), Wall (7,1), Floor (8,1), Wall (9,1),
+               Wall (0,2), Floor (1,2), Wall (2,2), Floor (3,2), Floor (4,2), Wall (5,2), Floor (6,2), Floor (7,2), Floor (8,2), Wall (9,2),
+               Wall (0,3), Floor (1,3), Wall (2,3), Wall (3,3), Floor (4,3), Floor (5,3), Floor (6,3), Wall (7,3), Floor (8,3), Wall (9,3),
+               Wall (0,4), Floor (1,4), Wall (2,4), Floor (3,4), Floor (4,4), Wall (5,4), Floor (6,4), Floor (7,4), Floor (8,4), Wall (9,4),
+               Wall (0,5), Floor (1,5), Floor (2,5), Floor (3,5), Wall (4,5), Wall (5,5), Floor (6,5), Wall (7,5), Floor (8,5), Wall (9,5),
+               Wall (0,6), Floor (1,6), Wall (2,6), Floor (3,6), Floor (4,6), Wall (5,6), Floor (6,6), Wall (7,6), Floor (8,6), Wall (9,6),
+               Wall (0,7), Floor (1,7), Wall (2,7), Wall (3,7), Floor (4,7), Floor (5,7), Floor (6,7), Wall (7,7), Floor (8,7), Wall (9,7),
+               Wall (0,8), Floor (1,8), Floor (2,8), Floor (3,8), Floor (4,8), Wall (5,8), Floor (6,8), Floor (7,8), Floor (8,8), Wall (9,8),
+               Wall (0,9), Wall (1,9), Wall (2,9), Wall (3,9), Wall (4,9), Wall (5,9), Wall (6,9), Wall (7,9), Wall (8,9), Wall (9,9)
+             ]
+        in
+          T.TestCase $ T.assertEqual "aStar"
+          ([(3.0,8.0),(2.0,8.0),(1.0,8.0),(1.0,7.0),(1.0,6.0),(1.0,5.0),(1.0,4.0),(1.0,3.0)])
+          (aStar tiles goal start)
