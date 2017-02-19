@@ -21,7 +21,7 @@ baseWall = Wall (0, 0)
 	Post: A Board based on the list of list of tiles
 -}
 generateBoard :: [Board] -> Board
-generateBoard t@(x:xs) = generateBoardAux t (-(fromIntegral (length x))/2) ((fromIntegral (length t))/2)
+generateBoard t@(x:xs) = generateBoardAux t (-(length x)//2) ((length t)//2)
 
 generateBoardAux :: [[Tile]] -> Float -> Float -> Board
 generateBoardAux [] _ _ = []
@@ -32,6 +32,7 @@ generateBoardRow [] _ _ = []
 generateBoardRow ((Floor _):ts) x y = (Floor (x, y)) : (generateBoardRow ts (x+1) y)
 generateBoardRow ((Wall _):ts) x y = (Wall (x, y)) : (generateBoardRow ts (x+1) y)
 
+(//) x y = fromIntegral (div x y)
 
 standardTiles = generateBoard hardCodedTiles
 
