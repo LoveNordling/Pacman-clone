@@ -28,12 +28,17 @@ actorSpeed speed fps = (speed / fps, speed / fps)
 
 playerSpeed = actorSpeed baseSpeed fps
 
+{- moveActor g
+   PRE:      True
+   POST:     TODO
+   EXAMPLES: moveActor ==
+-}
 moveActor :: GameState -> GameState
 moveActor (State t (Player p m w) c) =
   let
     coordinates = p + m * playerSpeed
   in
-    State t (Player coordinates m) c
+    State t (Player coordinates m w) c
 
 {- handleKeyEvents e g
    PURPOSE:   Moves the player on key events.
@@ -43,14 +48,10 @@ moveActor (State t (Player p m w) c) =
 -}
 handleKeyEvents :: Event -> GameState -> GameState
 handleKeyEvents (EventKey (SpecialKey k) Down _ _) s = movePlayer s k
-handleKeyEvents (EventKey (SpecialKey k) Up   _ _) s = stopPlayer s k
+--handleKeyEvents (EventKey (SpecialKey k) Up   _ _) s = stopPlayer s k
 handleKeyEvents _ s = s
 
-{- moveActor g d
-   PRE:      True
-   POST:     Game state g with an entity moved in direction d
-   EXAMPLES: moveActor ==
--}
+
 movePlayer :: GameState -> SpecialKey -> GameState
 movePlayer (State t (Player p (x, y) w) c ) k =
   let
@@ -59,48 +60,50 @@ movePlayer (State t (Player p (x, y) w) c ) k =
           KeyLeft  -> (-1,0)
           KeyDown  -> (0,-1)
           KeyRight -> (1, 0)
-          _        -> (x, y)
-  in 
-   if m = (x, y) 
-   then checkPlayerCollision (State t (Player p m m) c) 
-   else makeValidMove (State t (Player p (x, y) m) c)
-
-    -- if isValidMove t n
-    --   then State t (Player p m) c
-    --   else State t (Player p (x, y)) c
-
-stopPlayer :: GameState -> SpecialKey -> GameState
-stopPlayer (State t (Player p (x, y) w) c ) k =
-  let
-    m = case k of
-      KeyUp    -> (x, 0)
-      KeyLeft  -> (0, y)
-      KeyDown  -> (x,0)
-      KeyRight -> (0, y)
-      _        -> (x, y)
-  in
-    State t (Player p m) c
-
-
-{-
-	findPlayerPos player
-	PRE: Actgor must be player (For now)
-	POST: Returns the coordinates of the tile that player is currently at
--}
-
+          _        -> w
+  in makeValidMove (State t (Player p (x, y) m) c)
 
 
 makeValidMove :: GameState -> GameState
 makeValidMove s@(State t (Player p (x, y) m) c) =
 	let 
-		p = approxPlayerPos p (x, y)
-		tile = findTile p + m
+		p = approxPlayerPos (Player p (x, y) m)
+		tile2Go = findTile (p + m) --The tile that arrives with respect to wished direction
+		tile2Come = findTile (p + (x, y)) --The tile that arrives with respect to current direction
 	in 
-	  if isValidMove 
+	  if isValidTile tile2Go
 	    then State t (Player p m m) c
-	    else State t (Player p (x, y) m) c
+	    else 
+		 if isValidTile  tile2Come 
+		  then State t (Player p (x, y) m) c 
+		  else State t(Player p (0, 0) m) c
+
+
+  
+isValidTile :: Maybe Tile -> Bool
+isValidTile (Just (Floor p )) = True
+isValidTile _ = False
+
+findTile :: (Float, Float) -> Maybe Tile
+findTile p = findTileAux p (Tile.standardTiles)
+
+findTileAux :: (Float, Float) -> [Tile] -> Maybe Tile
+findTileAux _ [] = Nothing
+findTileAux p ((Wall m ):ts) | p == m = Just (Wall p)
+findTileAux p ((Floor m ):ts) | p == m = Just (Floor p)
+findTileAux p (_:ts) = findTileAux p ts
+
+approxPlayerPos :: Actor -> (Float, Float)
+approxPlayerPos p@(Player (x,y) (mx, my) m)
+	| let tx = fst (findPlayerTile p) in (x + mx * (fst playerSpeed) - tx)^2 < (fst playerSpeed) ^ 2 = 
+	    let tx = fst (findPlayerTile p) in (tx, y)
+	| let ty = snd (findPlayerTile p) in (y + my * (fst playerSpeed) - ty)^2 < (fst playerSpeed) ^ 2 = 
+	    let ty = snd (findPlayerTile p) in (x, ty)
+	| otherwise = (x,y)
+
+
 findPlayerTile :: Actor -> (Float, Float)
-findPlayerTile (Player (x,y) _) = (round x, round y)
+findPlayerTile (Player (x,y) _ _) = (fromIntegral (round x), fromIntegral (round y))
 
 
 	

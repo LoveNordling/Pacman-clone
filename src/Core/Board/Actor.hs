@@ -18,5 +18,5 @@ type Movement = (Float, Float)
    EXAMPLES:  position (Player (5, -4)) == (5, -4)
 -}
 position :: Actor -> (Float, Float)
-position (Player a _)   = a
+position (Player a _ _)   = a
 position (Computer a) = a
