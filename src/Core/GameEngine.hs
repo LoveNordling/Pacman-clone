@@ -26,10 +26,12 @@ baseSpeed = 5
 actorSpeed :: Float -> Float -> (Float, Float)
 actorSpeed speed fps = (speed / fps, speed / fps)
 
+playerSpeed = actorSpeed baseSpeed fps
+
 moveActor :: GameState -> GameState
-moveActor (State t (Player p m) c) =
+moveActor (State t (Player p m w) c) =
   let
-    coordinates = p + m * (actorSpeed baseSpeed fps)
+    coordinates = p + m * playerSpeed
   in
     State t (Player coordinates m) c
 
@@ -50,7 +52,7 @@ handleKeyEvents _ s = s
    EXAMPLES: moveActor ==
 -}
 movePlayer :: GameState -> SpecialKey -> GameState
-movePlayer (State t (Player p (x, y)) c) k =
+movePlayer (State t (Player p (x, y) w) c ) k =
   let
     m = case k of
           KeyUp    -> (0, 1)
@@ -58,14 +60,17 @@ movePlayer (State t (Player p (x, y)) c) k =
           KeyDown  -> (0,-1)
           KeyRight -> (1, 0)
           _        -> (x, y)
-  in
-    State t (Player p m) c
+  in 
+   if m = (x, y) 
+   then checkPlayerCollision (State t (Player p m m) c) 
+   else makeValidMove (State t (Player p (x, y) m) c)
+
     -- if isValidMove t n
     --   then State t (Player p m) c
     --   else State t (Player p (x, y)) c
 
 stopPlayer :: GameState -> SpecialKey -> GameState
-stopPlayer (State t (Player p (x, y)) c) k =
+stopPlayer (State t (Player p (x, y) w) c ) k =
   let
     m = case k of
       KeyUp    -> (x, 0)
@@ -76,6 +81,50 @@ stopPlayer (State t (Player p (x, y)) c) k =
   in
     State t (Player p m) c
 
+
+{-
+	findPlayerPos player
+	PRE: Actgor must be player (For now)
+	POST: Returns the coordinates of the tile that player is currently at
+-}
+
+
+
+makeValidMove :: GameState -> GameState
+makeValidMove s@(State t (Player p (x, y) m) c) =
+	let 
+		p = approxPlayerPos p (x, y)
+		tile = findTile p + m
+	in 
+	  if isValidMove 
+	    then State t (Player p m m) c
+	    else State t (Player p (x, y) m) c
+findPlayerTile :: Actor -> (Float, Float)
+findPlayerTile (Player (x,y) _) = (round x, round y)
+
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	--OLD MOVEMENT! 
+	--REMOVE?
+	
+	
 -- movePlayer :: GameState -> SpecialKey -> GameState
 -- movePlayer (State t (Player p x) c) k =
 --   let
