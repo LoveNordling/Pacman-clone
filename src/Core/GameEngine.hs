@@ -35,21 +35,26 @@ setPlayerMovement s@(State t (Player p moving) c) k =
 
 movePlayer :: GameState -> GameState
 movePlayer s@(State t (Player p m) (Computer c _)) =
-  let
-    n = p + m * (actorSpeed 3 60)
-    (_:is) = calculateAIMovement s
-    -- b = (fromIntegral x, fromIntegral y)
-  in
-    if isValidMove t n
-      then State t (Player n m) (Computer c is)
-      else State t (Player p (0, 0)) (Computer c is)
+  if m == (0,0)
+    then s
+    else let
+            n = p + m * (actorSpeed 3 60)
+            (_:is) = calculateAIMovement s
+          in
+            if isValidMove t n
+              then State t (Player n m) (Computer c is)
+              else State t (Player p (0, 0)) (Computer c is)
 
+-- TODO: AI Movement must be rewritten.
+-- Problem is, the fps rate is too high. The AI will make all its moves at once basically.
+-- Perhaps: The AI will move one tile, recalculate, move to another tile, making the
+-- movements smooth. Still, it doesn't solve the problem of the high fps rate.
 moveAI :: GameState -> GameState
 moveAI gst@(State _ _ (Computer _ [])) = gst
 moveAI (State t p (Computer c@(r,s) ((x,y):cs))) =
   let
-     m = (fromIntegral (x - (round r)), fromIntegral (y - (round s)))
-     b = (fromIntegral x, fromIntegral y) + m * (actorSpeed 5 60)
+     m = (fromIntegral (x - (round r)), fromIntegral (y - (round s))) -- this is the direction
+     b = (fromIntegral x, fromIntegral y) + m * (actorSpeed 0.00000000000000000000000000000000000000001 60)
   in
     State t p (Computer b cs)
 
