@@ -38,8 +38,8 @@ drawMap t p c =
          EXAMPLES:  drawActor ==
       -}
       drawActor :: Actor -> Float -> Picture
-      drawActor (Player p _)   d = translateAndColor p d blue (circle 5)
-      drawActor (Computer p) d = translateAndColor p d green (circle 5)
+      drawActor (Player   p _) d = translateAndColor p d blue (circle 5)
+      drawActor (Computer p _) d = translateAndColor p d green (circle 5)
       {- drawInterior t f acc
          PRE:       True
          POST:      The interiors in t to be displayed.

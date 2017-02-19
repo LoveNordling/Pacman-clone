@@ -1,4 +1,4 @@
-module Tile(Board, GameState(..), standardTiles) where
+module Tile(Board, GameState(..), standardTiles, standardTiles2) where
 
 import Core.Board.Actor
 import Core.Board.Tile
@@ -34,6 +34,20 @@ generateBoardRow ((Wall _):ts) x y = (Wall (x, y)) : (generateBoardRow ts (x+1) 
 
 
 standardTiles = generateBoard hardCodedTiles
+standardTiles2 = generateBoard hardCodedTiles2
+
+hardCodedTiles2 = [
+  [baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall],
+  [baseWall, baseFloor, baseFloor, baseFloor, baseWall, baseWall, baseFloor, baseWall, baseFloor, baseWall],
+  [baseWall, baseFloor, baseWall, baseFloor, baseFloor, baseWall, baseFloor, baseFloor, baseFloor, baseWall],
+  [baseWall, baseFloor, baseWall, baseWall, baseFloor, baseFloor, baseFloor, baseWall, baseFloor, baseWall],
+  [baseWall, baseFloor, baseWall, baseFloor, baseFloor, baseWall, baseFloor, baseFloor, baseFloor, baseWall],
+  [baseWall, baseFloor, baseFloor, baseFloor, baseWall, baseWall, baseFloor, baseWall, baseFloor, baseWall],
+  [baseWall, baseFloor, baseWall, baseFloor, baseFloor, baseWall, baseFloor, baseWall, baseFloor, baseWall],
+  [baseWall, baseFloor, baseWall, baseWall, baseFloor, baseFloor, baseFloor, baseWall, baseFloor, baseWall],
+  [baseWall, baseFloor, baseFloor, baseFloor, baseFloor, baseWall, baseFloor, baseFloor, baseFloor, baseWall],
+  [baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall]
+  ]
 
 hardCodedTiles =
 	[

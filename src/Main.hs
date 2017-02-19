@@ -20,7 +20,7 @@ instance (Num a, Num b) => Num (a, b) where
 
 -- The initial state of the game
 state :: GameState
-state = State standardTiles (Player (-6, 6) (0,0)) (Computer (0, 0))
+state = State standardTiles2 (Player (-4,4) (0,0)) (Computer (1, 0) [])
 
 -- The window used by Gloss
 window :: Display

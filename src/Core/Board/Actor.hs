@@ -1,4 +1,4 @@
-module Core.Board.Actor (Actor(..), position) where
+module Core.Board.Actor (Actor(..), Direction(..), position) where
 
 {-
   REPRESENTATION CONVENTION:
@@ -7,7 +7,11 @@ module Core.Board.Actor (Actor(..), position) where
     The coordinates of the player and computer must not be out of bounds compared to the board they are occupying.
 
 -}
-data Actor = Player (Float, Float) Movement | Computer (Float, Float)
+-- data Actor = Player (Float, Float) Movement | Computer (Float, Float) [(Float, Float)]
+
+data Actor = Player (Float, Float) Movement | Computer (Float, Float) [(Float, Float)]
+
+data Direction = U | D | L | R
 
 -- First component is horizontal movement, second is vertical
 type Movement = (Float, Float)
@@ -18,5 +22,5 @@ type Movement = (Float, Float)
    EXAMPLES:  position (Player (5, -4)) == (5, -4)
 -}
 position :: Actor -> (Float, Float)
-position (Player a _)   = a
-position (Computer a) = a
+position (Player   (a, b) _) = (fromIntegral (truncate a), fromIntegral (truncate b))
+position (Computer (a, b) _) = (fromIntegral (truncate a), fromIntegral (truncate b))

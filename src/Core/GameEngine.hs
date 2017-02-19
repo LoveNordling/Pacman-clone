@@ -5,7 +5,9 @@ import Graphics.Gloss.Interface.Pure.Game
 import Core.Board.Tile
 import Core.Board.Board
 import Core.Board.Actor
+import Core.Pathfinder
 import Tile
+import Debug.Trace
 
 {- step s state
    PURPOSE:   Steps the game at s frames per second.
@@ -14,7 +16,7 @@ import Tile
    EXAMPLES:  step ==
 -}
 step :: Float -> GameState -> GameState
-step _ s = moveActor s
+step _ s = moveAI (moveActor s)
 
 -- TODO: Move this
 fps :: Float
@@ -26,12 +28,25 @@ baseSpeed = 5
 actorSpeed :: Float -> Float -> (Float, Float)
 actorSpeed speed fps = (speed / fps, speed / fps)
 
+
+{- calculateAIMovement s
+   PRE:           True
+   POST:          a new path based on s
+   EXAMPLES:      calculateAIMovement ==
+-}
+calculateAIMovement :: GameState -> [(Float, Float)]
+calculateAIMovement (State t (Player p _) (Computer c _)) = case (aStar t p c) of
+                                                              [] -> [c]
+                                                              ps -> ps
+
 moveActor :: GameState -> GameState
-moveActor (State t (Player p m) c) =
+moveActor s@(State t (Player p m) _) =
   let
-    coordinates = p + m * (actorSpeed baseSpeed fps)
+    coordinates = p + m -- * (actorSpeed baseSpeed fps)
+    (c:cs) = calculateAIMovement s
   in
-    State t (Player coordinates m) c
+    State t (Player coordinates (0,0)) (Computer c cs)
+    -- State t (Player coordinates m) (Computer c cs)
 
 {- handleKeyEvents e g
    PURPOSE:   Moves the player on key events.
@@ -75,6 +90,11 @@ stopPlayer (State t (Player p (x, y)) c) k =
       _        -> (x, y)
   in
     State t (Player p m) c
+
+
+moveAI :: GameState -> GameState
+moveAI gst@(State t p (Computer c [])) = gst
+moveAI (State t p (Computer _ (c:cs))) = State t p (Computer c cs)
 
 -- movePlayer :: GameState -> SpecialKey -> GameState
 -- movePlayer (State t (Player p x) c) k =
