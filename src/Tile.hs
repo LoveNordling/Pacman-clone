@@ -2,7 +2,7 @@ module Tile(Board, GameState(..), standardTiles, standardTiles2) where
 
 import Core.Board.Actor
 import Core.Board.Tile
-
+import Data.Array
 -- Suppress HLint messages
 {-# ANN module "HLint: Ignore Use mappend" #-}
 
@@ -20,12 +20,30 @@ baseWall = Wall (0, 0)
 	Pre: True
 	Post: A Board based on the list of list of tiles
 -}
+
+generateBoards :: [Board] -> Board
+generateBoards [] = []
+generateBoards (r:rs) = generateRow r 0 0
+  where
+    {- generateRow b r c
+       PRE:           True
+       POST:          ...
+       EXAMPLES:      generateRow  ==
+       VARIANT:       |b|
+    -}
+    generateRow :: Board -> Int -> Int -> Board
+    generateRow [] _ _ = generateBoards rs (x+1) 0
+    generateRow ((Floor _):tiles) x y =
+      (Floor (x, y)) : (generateRow tiles x (y+1))
+    generateRow ((Wall _):tiles) x y =
+      (Wall (x, y)) : (generateRow tiles x (y+1))
+
 generateBoard :: [Board] -> Board
-generateBoard t@(x:xs) = generateBoardAux t (-(length x)//2) ((length t)//2)
+generateBoard t@(x:xs) = generateBoardAux t 0 0 -- (-(length x)//2) ((length t)//2)
 
 generateBoardAux :: [[Tile]] -> Float -> Float -> Board
 generateBoardAux [] _ _ = []
-generateBoardAux (t:ts) x y = (generateBoardRow t x y) ++ generateBoardAux ts x (y-1)
+generateBoardAux (t:ts) x y = (generateBoardRow t x y) ++ generateBoardAux ts x (y+1)
 
 generateBoardRow :: [Tile] -> Float -> Float -> Board
 generateBoardRow [] _ _ = []
