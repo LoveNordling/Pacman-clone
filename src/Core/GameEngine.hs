@@ -34,7 +34,7 @@ handleKeyEvents _ s = s
 
 -- sets the movement of the player
 setPlayerMovement :: GameState -> SpecialKey -> GameState
-setPlayerMovement s@(State t (Player p moving) c) k =
+setPlayerMovement s@(State t (Player p moving score) c) k =
   let
     movement = case k of
                 KeyUp    -> (0, 1)
@@ -43,18 +43,26 @@ setPlayerMovement s@(State t (Player p moving) c) k =
                 KeyRight -> (1, 0)
                 _        -> moving
   in
-    State t (Player p movement) c
+    State t (Player p movement score) c
 
 moveActor :: GameState -> GameState
-moveActor (State t (Player p m) (Computer (x, y) (mx, my) ts)) =
+moveActor (State t (Player p m s) (Computer (x, y) (mx, my) ts)) =
   let
     aiMovement = (x, y) + ((mx, my) * computerSpeed)
     plMovement =  p + m * playerSpeed
   in
     if isValidMove t plMovement
-      then State t (Player plMovement m) (Computer aiMovement (mx, my) ts)
-      else State t (Player p (0, 0)) (Computer aiMovement (mx, my) ts)
+      then
+        case checkForTreasure t plMovement of
+          True ->  let
+                     t' = t // [((round x, round y), (Floor (round x, round y) False))] 
+                   in
+                     State t' (Player plMovement m (s+1)) (Computer aiMovement (mx, my) ts)
+          False -> State t (Player plMovement m s) (Computer aiMovement (mx, my) ts) 
+      else
+        State t (Player p (0, 0) s) (Computer aiMovement (mx, my) ts)
 
+  
 -- TODO: AI Movement must be rewritten.
 -- Problem is, the fps rate is too high. The AI will make all its moves at once basically.
 -- Perhaps: The AI will move one tile, recalculate, move to another tile, making the
@@ -104,6 +112,15 @@ approximatePosition (x, y) speed =
       then (tx, ty)
       else (x, y)
 
+checkForTreasure :: Board -> (Float, Float) -> Bool
+checkForTreasure board (x, y) =
+  let
+    (x', y') = (round x, round y)
+  in
+    case (board ! (x', y')) of
+      (Floor _ True) -> True
+      _              -> False
+
 isValidMove :: Board -> (Float, Float) -> Bool
 isValidMove board (x, y) =
   let
@@ -114,7 +131,7 @@ isValidMove board (x, y) =
       _        -> True
 
 calculateAIMovement :: GameState -> [(Int, Int)]
-calculateAIMovement (State t (Player (x, y) _) (Computer (a, b) _ _)) =
+calculateAIMovement (State t (Player (x, y) _ _) (Computer (a, b) _ _)) =
   let
      (x', y') = (round x, round y) -- computer tile
      (a', b') = (round a, round b) -- player tile

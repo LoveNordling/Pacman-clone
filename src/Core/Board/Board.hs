@@ -6,8 +6,9 @@ type Board = Array (Int, Int) Tile.Tile
 type Tiles = [Tile.Tile]
 type Matrix = [Tiles]
 
-baseFloor = Tile.Floor (0, 0)
+baseFloor = Tile.Floor (0, 0) False
 baseWall  = Tile.Wall (0, 0)
+itemFloor = Tile.Floor (0,0) True
 
 {- createBoard m
    PRE:       Each row in m must have the same number of elements.
@@ -42,21 +43,19 @@ createBoard board =
           generateRow :: Tiles -> Int -> Tiles
           generateRow []     _ = []
           generateRow (t:ts) y = (Tile.setPosition t x y):(generateRow ts (y+1))
-
-
 ---- MAP 1
 map1 = createBoard hardcodedTiles1
 
 hardcodedTiles1 = [
   [baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall],
   [baseWall, baseFloor, baseFloor, baseFloor, baseWall, baseWall, baseFloor, baseWall, baseFloor, baseWall],
-  [baseWall, baseFloor, baseWall, baseFloor, baseFloor, baseWall, baseFloor, baseFloor, baseFloor, baseWall],
+  [baseWall, baseFloor, baseWall, baseFloor, baseFloor, baseWall, baseFloor, itemFloor, baseFloor, baseWall],
   [baseWall, baseFloor, baseWall, baseWall, baseFloor, baseFloor, baseFloor, baseWall, baseFloor, baseWall],
   [baseWall, baseFloor, baseWall, baseFloor, baseFloor, baseWall, baseFloor, baseFloor, baseFloor, baseWall],
   [baseWall, baseFloor, baseFloor, baseFloor, baseWall, baseWall, baseFloor, baseWall, baseFloor, baseWall],
   [baseWall, baseFloor, baseWall, baseFloor, baseFloor, baseWall, baseFloor, baseWall, baseFloor, baseWall],
   [baseWall, baseFloor, baseWall, baseWall, baseFloor, baseFloor, baseFloor, baseWall, baseFloor, baseWall],
-  [baseWall, baseFloor, baseFloor, baseFloor, baseFloor, baseWall, baseFloor, baseFloor, baseFloor, baseWall],
+  [baseWall, baseFloor, itemFloor, baseFloor, baseFloor, baseWall, baseFloor, itemFloor, baseFloor, baseWall],
   [baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall]
   ]
 
