@@ -7,8 +7,6 @@ import Core.Board.Board
 import Core.Board.Tile
 import Core.Board.GameState
 
-import Debug.Trace
-
 mapSize :: Int
 mapSize = 1000
 
@@ -31,7 +29,7 @@ render (State t p c) = drawMap t p c
 {- drawMap t p c
    PRE:           True
    POST:          The image to be displayed, based on t with entities p and c.
-   EXAMPLES:      render ==
+   EXAMPLES:      drawMap ==
 -}
 drawMap :: Board -> Actor -> Actor -> Picture
 drawMap b p c =

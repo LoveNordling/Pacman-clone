@@ -16,5 +16,12 @@ Run the program using:
 $ cabal run
 ```
 
+##### Testing
+Testing requires the packages ``hspec >= 2.4.1`` and ``QuickCheck >= 2.9.2``. Install these before running any tests.
+
+```bash
+$ cabal test
+```
+
 ### Authors
 DazzleBox is created by Love Nordling (@lovenordling), Ulf Sigvardsson (@ulfsigvardsson) and Ardalan Samimi (@pkrll).

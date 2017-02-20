@@ -26,6 +26,6 @@ executable DazzleBox
 Test-Suite Test
   type:                exitcode-stdio-1.0
   main-is:             Main.hs
-  build-depends:       base >=4.9 && <4.10, gloss==1.10.*, hspec >=2.4.1, QuickCheck >=2.9.2
+  build-depends:       base >=4.9 && <4.10, gloss==1.10.*, hspec >=2.4.1, QuickCheck >=2.9.2, array
   hs-source-dirs:      Test, src
   default-language:    Haskell2010
