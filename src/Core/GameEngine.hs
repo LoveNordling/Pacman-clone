@@ -13,17 +13,17 @@ fps :: Int
 fps = 60
 
 computerSpeed :: (Float, Float)
-computerSpeed = actorSpeed 5 (fromIntegral fps)
+computerSpeed = actorSpeed 1 (fromIntegral fps)
 
 playerSpeed :: (Float, Float)
-playerSpeed = actorSpeed 10 (fromIntegral fps)
+playerSpeed = actorSpeed 3 (fromIntegral fps)
 
 actorSpeed :: Float -> Float -> (Float, Float)
 actorSpeed speed fps = (speed / fps, speed / fps)
 
 -- moves the player and the AI
 step :: Float -> GameState -> GameState
-step _ s = moveActor (moveAI s) --(movePlayer s)
+step _ s = moveActor (checkPlayerCollsion (moveAI s)) --(movePlayer s)
 
 handleKeyEvents :: Event -> GameState -> GameState
 handleKeyEvents (EventKey (SpecialKey k) Down _ _) s =
@@ -42,17 +42,36 @@ setPlayerMovement s@(State t (Player p moving w) c) k =
                 KeyDown  -> (0,-1)
                 KeyRight -> (1, 0)
                 _        -> w
-	newState = State t (Player p moving desiredDirection) c
-  in
-    checkPlayerCollsion newState
+  in State t (Player p moving desiredDirection) c
 
 checkPlayerCollsion :: GameState -> GameState
-checkPlayerCollsion gst@(State tiles (Player (x,y) v w) c) = 
-    if approximatePosition (x,y) playerSpeed == (x,v) 
-	then
-	    let
+checkPlayerCollsion gst@(State board (Player (x,y) v w) c) = 
+	let 
+		(x',y') = approximatePosition (x,y) (fst playerSpeed)
+		currentTile = (fromIntegral (round x), fromIntegral (round y))
+	in
+		if (x',y') == currentTile
+		then makeValidMove (State board (Player (x' ,y') v w) c)
+		else gst
+
+makeValidMove :: GameState -> GameState
+makeValidMove gst@(State board (Player (x,y) v w) c) =
+	let
+		tile2go = findTile board ((x,y) + w) 
+		tile2come = findTile board ((x,y) + v) 
+	in 
+		if isValidMove tile2go
+		then State board (Player (x,y) w w) c
+		else
+			if isValidMove tile2come 
+			then State board (Player (x,y) v w) c
+			else State board (Player (x,y) (0,0) w) c
+
+isValidMove (Floor _ ) = True
+isValidMove _ = False
 			
-	else gst
+
+findTile board (x,y) = board !(round x, round y)
 	
 moveActor :: GameState -> GameState
 moveActor (State t (Player p m n) (Computer (x, y) (mx, my) ts)) =
@@ -60,9 +79,7 @@ moveActor (State t (Player p m n) (Computer (x, y) (mx, my) ts)) =
     aiMovement = (x, y) + ((mx, my) * computerSpeed)
     plMovement =  p + m * playerSpeed
   in
-    if isValidMove t plMovement
-      then State t (Player plMovement m n) (Computer aiMovement (mx, my) ts)
-      else State t (Player p (0, 0) n) (Computer aiMovement (mx, my) ts)
+	State t (Player plMovement m n) (Computer aiMovement (mx, my) ts)
 
 -- TODO: AI Movement must be rewritten.
 -- Problem is, the fps rate is too high. The AI will make all its moves at once basically.
@@ -109,18 +126,9 @@ approximatePosition (x, y) speed =
     tx = fromIntegral (round x)
     ty = fromIntegral (round y)
   in
-    if abs (x - tx) < speed && abs (y - ty) < speed
+    if abs (x - tx) < speed*2/3 && abs (y - ty) < speed*2/3
       then (tx, ty)
       else (x, y)
-
-isValidMove :: Board -> (Float, Float) -> Bool
-isValidMove board (x, y) =
-  let
-    (x', y') = (round x, round y)
-  in
-    case (board ! (x', y')) of
-      (Wall _) -> False
-      _        -> True
 
 calculateAIMovement :: GameState -> [(Int, Int)]
 calculateAIMovement (State t (Player (x, y) _ _) (Computer (a, b) _ _)) =
