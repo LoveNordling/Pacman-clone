@@ -45,6 +45,8 @@ setPlayerMovement s@(State t (Player p moving w) c) k =
   in State t (Player p moving desiredDirection) c
 
 checkPlayerCollsion :: GameState -> GameState
+checkPlayerCollsion gst@(State board (Player (x,y) v w) c) | v + w == (0,0) = 
+	State board (Player (x,y) w w) c
 checkPlayerCollsion gst@(State board (Player (x,y) v w) c) = 
 	let 
 		(x',y') = approximatePosition (x,y) (fst playerSpeed)
