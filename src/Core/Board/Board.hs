@@ -2,17 +2,22 @@ module Core.Board.Board (Board, Tiles, createBoard, map1, map2) where
 import Data.Array
 import qualified Core.Board.Tile as Tile
 
+-- The board/map
 type Board = Array (Int, Int) Tile.Tile
+
+-- The elements of a board
 type Tiles = [Tile.Tile]
+
 type Matrix = [Tiles]
 
+-- Base floor and wall used for easier map generation
 baseFloor = Tile.Floor (0, 0)
 baseWall  = Tile.Wall (0, 0)
 
 {- createBoard m
    PRE:       Each row in m must have the same number of elements.
-   POST:      An array based on m where index is the position of the elements in m.
-   EXAMPLES:  generateBoard  ==
+   POST:      An indexable list with elements from m, where an elements index is the position of the element in m.
+   EXAMPLES:  generateBoard [ [baseWall, baseWall], [baseFloor, baseWall] ] == array ((0,0),(1,1)) [((0,0), Wall (0,0)), ((0,1), Wall (0,1)), ((1,0), Floor (1,0)), ((1,1), Wall (1,1))]
 -}
 createBoard :: Matrix -> Board
 createBoard board =
@@ -24,8 +29,8 @@ createBoard board =
     where
       {- generateBoard m r acc
          PRE:       Each row in m must have the same number of elements.
-         POST:      A board with the pieces' position based on the position of them in m.
-         EXAMPLES:  generateBoard  ==
+         POST:      acc with tiles based on elements in m.
+         EXAMPLES:  generateBoard [ [baseWall, baseWall], [baseFloor, baseWall] ] 0 [] == [Wall (0,0), Wall (0,1), Floor (1,0), Wall (1,1)]
          VARIANT:   |m|
       -}
       generateBoard :: Matrix -> Int -> Tiles -> Tiles
@@ -35,8 +40,10 @@ createBoard board =
         where
           {- generateRow b c
              PRE:       True
-             POST:      A board with pieces with
-             EXAMPLES:  generateRow ==
+             POST:      Tiles based on b with position c.
+             EXAMPLES:  generateRow [ baseWall, baseWall ] 0 0 == [ Wall (0,0), Wall (0,1) ]
+                        generateRow [ baseWall, baseWall ] 1 0 == [ Wall (1,0), Wall (1,1) ]
+                        generateRow [ ] 0 0                    == [ ]
              VARIANT:   |b|
           -}
           generateRow :: Tiles -> Int -> Tiles
@@ -60,6 +67,7 @@ hardcodedTiles1 = [
   [baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall]
   ]
 
+--- Map 2 TODO: Needs update
 map2 = createBoard hardcodedTiles2
 
 hardcodedTiles2 = [
