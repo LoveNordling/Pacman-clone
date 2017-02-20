@@ -50,7 +50,7 @@ drawMap b p c =
            EXAMPLES:  drawActor ==
         -}
         drawActor :: Actor -> Int -> Picture
-        drawActor (Player   p _) d = translateAndColor p d blue (circle $ fromIntegral d / 2)
+        drawActor (Player   p _ _) d = translateAndColor p d blue (circle $ fromIntegral d / 2)
         drawActor (Computer p _ _) d = translateAndColor p d green (circle $ fromIntegral d / 2)
         {- drawInterior t f acc
            PRE:       True
@@ -60,7 +60,8 @@ drawMap b p c =
         -}
         drawInterior :: Tiles -> Int -> [Picture] -> [Picture]
         drawInterior []             d acc = acc
-        drawInterior ((Floor p):ts) d acc = drawInterior ts d ((makeRectangle p d red):acc)
+        drawInterior ((Floor p True):ts) d acc = drawInterior ts d ((pictures [makeRectangle p d red, makeTreasure p d yellow]):acc)
+        drawInterior ((Floor p _):ts) d acc = drawInterior ts d ((makeRectangle p d red):acc)
         drawInterior ((Wall p):ts)  d acc = drawInterior ts d ((makeRectangle p d black):acc)
         {- makeRectangle p d c
            PRE:       p must be valid coordinates.
@@ -76,8 +77,10 @@ drawMap b p c =
            EXAMPLES:  translateAndColor ==
         -}
         translateAndColor :: (Position a) => (a, a) -> Int -> Color -> Picture -> Picture
-        translateAndColor p d c = (setCoordinate p $ fromIntegral d) . color c
+        translateAndColor p d c = (setCoordinate p $ fromIntegral d) . color c
 
+        makeTreasure :: (Int, Int) -> Int -> Color -> Picture
+        makeTreasure p d c = translateAndColor p d c (circleSolid (fromIntegral (d `div` 3)))
 
 
 -- translateCoordinates :: (Float, Float) -> (Int, Int)

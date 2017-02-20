@@ -1,2 +1,4 @@
 *cabal*
 dist
+*.o
+*.hi
