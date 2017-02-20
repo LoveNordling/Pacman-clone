@@ -1,4 +1,4 @@
-module Core.GameEngine (step, handleKeyEvents) where
+module Core.GameEngine (step, handleKeyEvents, approxPlayerPos) where
 
 import Prelude hiding (Right, Left)
 import Graphics.Gloss.Interface.Pure.Game
@@ -6,6 +6,7 @@ import Core.Board.Tile
 import Core.Board.Board
 import Core.Board.Actor
 import Tile
+import Debug.Trace
 
 {- step s state
    PURPOSE:   Steps the game at s frames per second.
@@ -34,7 +35,10 @@ playerSpeed = actorSpeed baseSpeed fps
    EXAMPLES: moveActor ==
 -}
 moveActor :: GameState -> GameState
-moveActor (State t (Player p m w) c) =
+moveActor s = moveActorAux (makeValidMove s)
+
+moveActorAux :: GameState -> GameState
+moveActorAux (State t (Player p m w) c) =
   let
     coordinates = p + m * playerSpeed
   in
@@ -48,12 +52,11 @@ moveActor (State t (Player p m w) c) =
 -}
 handleKeyEvents :: Event -> GameState -> GameState
 handleKeyEvents (EventKey (SpecialKey k) Down _ _) s = movePlayer s k
---handleKeyEvents (EventKey (SpecialKey k) Up   _ _) s = stopPlayer s k
 handleKeyEvents _ s = s
 
 
 movePlayer :: GameState -> SpecialKey -> GameState
-movePlayer (State t (Player p (x, y) w) c ) k =
+movePlayer (State t (Player p v w) c ) k =
   let
     m = case k of
           KeyUp    -> (0, 1)
@@ -61,27 +64,33 @@ movePlayer (State t (Player p (x, y) w) c ) k =
           KeyDown  -> (0,-1)
           KeyRight -> (1, 0)
           _        -> w
-  in makeValidMove (State t (Player p (x, y) m) c)
+  in trace ("v, m = " ++ (show v) ++ " , " ++ (show m)) (State t (Player p v m) c )
 
 
 makeValidMove :: GameState -> GameState
 makeValidMove s@(State t (Player p (x, y) m) c) =
 	let 
+		tile = findPlayerTile (Player p (x, y) m)
 		p = approxPlayerPos (Player p (x, y) m)
+
 		tile2Go = findTile (p + m) --The tile that arrives with respect to wished direction
-		tile2Come = findTile (p + (x, y)) --The tile that arrives with respect to current direction
+		tile2Come = findTile (p + (x, y)) --The tile that arrives with respect to current direction 
 	in 
-	  if isValidTile tile2Go
-	    then State t (Player p m m) c
-	    else 
-		 if isValidTile  tile2Come 
-		  then State t (Player p (x, y) m) c 
-		  else State t(Player p (0, 0) m) c
+	  if tile == p
+	    then s
+	      {-if isValidTile tile2Go
+	      then State t (Player p m m) c
+	      else 
+		   if isValidTile  tile2Come 
+		    then State t (Player p (x, y) m) c 
+		    else State t(Player p (0, 0) m) c -}
+	    else
+	      if (x,y) + m == (0,0) then State t (Player p m m) c else s 
 
 
-  
+
 isValidTile :: Maybe Tile -> Bool
-isValidTile (Just (Floor p )) = True
+isValidTile (Just (Floor p)) = True
 isValidTile _ = False
 
 findTile :: (Float, Float) -> Maybe Tile
@@ -95,9 +104,9 @@ findTileAux p (_:ts) = findTileAux p ts
 
 approxPlayerPos :: Actor -> (Float, Float)
 approxPlayerPos p@(Player (x,y) (mx, my) m)
-	| let tx = fst (findPlayerTile p) in (x + mx * (fst playerSpeed) - tx)^2 < (fst playerSpeed) ^ 2 = 
+	| let tx = fst (findPlayerTile p) in (x + mx * (fst playerSpeed) - tx)^2 < (fst playerSpeed) ^ 2 && not (tx == x) = 
 	    let tx = fst (findPlayerTile p) in (tx, y)
-	| let ty = snd (findPlayerTile p) in (y + my * (fst playerSpeed) - ty)^2 < (fst playerSpeed) ^ 2 = 
+	| let ty = snd (findPlayerTile p) in trace ("ty = " ++ (show ty)) (y + my * (fst playerSpeed) - ty)^2 < (fst playerSpeed) ^ 2 = 
 	    let ty = snd (findPlayerTile p) in (x, ty)
 	| otherwise = (x,y)
 

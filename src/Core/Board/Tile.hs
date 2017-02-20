@@ -9,7 +9,7 @@ module Core.Board.Tile (Tile(..)) where
     Tiles cannot have overlapping positions.
 
 -}
-data Tile = Floor (Float, Float) | Wall (Float, Float)
+data Tile = Floor (Float, Float) | Wall (Float, Float) deriving (Eq)
 
 {- position a
    PRE:       True
