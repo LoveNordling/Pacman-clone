@@ -34,26 +34,35 @@ handleKeyEvents _ s = s
 
 -- sets the movement of the player
 setPlayerMovement :: GameState -> SpecialKey -> GameState
-setPlayerMovement s@(State t (Player p moving) c) k =
+setPlayerMovement s@(State t (Player p moving w) c) k =
   let
-    movement = case k of
+    desiredDirection = case k of
                 KeyUp    -> (0, 1)
                 KeyLeft  -> (-1,0)
                 KeyDown  -> (0,-1)
                 KeyRight -> (1, 0)
-                _        -> moving
+                _        -> w
+	newState = State t (Player p moving desiredDirection) c
   in
-    State t (Player p movement) c
+    checkPlayerCollsion newState
 
+checkPlayerCollsion :: GameState -> GameState
+checkPlayerCollsion gst@(State tiles (Player (x,y) v w) c) = 
+    if approximatePosition (x,y) playerSpeed == (x,v) 
+	then
+	    let
+			
+	else gst
+	
 moveActor :: GameState -> GameState
-moveActor (State t (Player p m) (Computer (x, y) (mx, my) ts)) =
+moveActor (State t (Player p m n) (Computer (x, y) (mx, my) ts)) =
   let
     aiMovement = (x, y) + ((mx, my) * computerSpeed)
     plMovement =  p + m * playerSpeed
   in
     if isValidMove t plMovement
-      then State t (Player plMovement m) (Computer aiMovement (mx, my) ts)
-      else State t (Player p (0, 0)) (Computer aiMovement (mx, my) ts)
+      then State t (Player plMovement m n) (Computer aiMovement (mx, my) ts)
+      else State t (Player p (0, 0) n) (Computer aiMovement (mx, my) ts)
 
 -- TODO: AI Movement must be rewritten.
 -- Problem is, the fps rate is too high. The AI will make all its moves at once basically.
@@ -114,7 +123,7 @@ isValidMove board (x, y) =
       _        -> True
 
 calculateAIMovement :: GameState -> [(Int, Int)]
-calculateAIMovement (State t (Player (x, y) _) (Computer (a, b) _ _)) =
+calculateAIMovement (State t (Player (x, y) _ _) (Computer (a, b) _ _)) =
   let
      (x', y') = (round x, round y) -- computer tile
      (a', b') = (round a, round b) -- player tile

@@ -7,7 +7,7 @@ module Core.Board.Actor (Actor(..)) where
     The coordinates of the player and computer must not be out of bounds compared to the board they are occupying.
 
 -}
-data Actor = Player (Float, Float) Movement | Computer (Float, Float) Movement [(Int, Int)]
+data Actor = Player (Float, Float) Movement Movement | Computer (Float, Float) Movement [(Int, Int)]
 
 -- First component is horizontal movement, second is vertical
 type Movement = (Float, Float)
@@ -17,5 +17,5 @@ type Movement = (Float, Float)
    EXAMPLES:  position (Player (5, -4)) == (5, -4)
 -}
 position :: Actor -> (Float, Float)
-position (Player   (a, b) _) = (fromIntegral (truncate a), fromIntegral (truncate b))
+position (Player   (a, b) _ _) = (fromIntegral (truncate a), fromIntegral (truncate b))
 position (Computer (a, b) _ _) = (fromIntegral (truncate a), fromIntegral (truncate b))
