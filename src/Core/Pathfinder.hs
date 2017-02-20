@@ -1,10 +1,13 @@
 module Core.Pathfinder (aStar) where
 import Data.List
+import Data.Array
 import Core.Board.Tile
 
 type Position = (Float, Float)
 type Path = [Position]
-type Board = [Tile]
+-- type Board = [Tile]
+
+
 
 {- validCoordinates (x, y)
    PRE: True

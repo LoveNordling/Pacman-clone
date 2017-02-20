@@ -1,4 +1,4 @@
-module Core.Board.Tile (Tile(..)) where
+module Core.Board.Tile (Tile(..), setPosition) where
 
 {-
   REPRESENTATION CONVENTION:
@@ -9,13 +9,17 @@ module Core.Board.Tile (Tile(..)) where
     Tiles cannot have overlapping positions.
 
 -}
-data Tile = Floor (Float, Float) | Wall (Float, Float)
+data Tile = Floor (Int, Int) | Wall (Int, Int) deriving (Show)
 
 {- position a
    PRE:       True
    POST:      The current position of a.
    EXAMPLES:  position (Floor (1, 1)) == (1, 1)
 -}
-position :: Tile -> (Float, Float)
+position :: Tile -> (Int, Int)
 position (Floor a) = a
 position (Wall a)  = a
+
+setPosition :: Tile -> Int -> Int -> Tile
+setPosition (Floor _) x y = Floor (x, y)
+setPosition (Wall _)  x y = Wall (x, y)
