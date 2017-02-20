@@ -9,7 +9,8 @@ module Core.Board.Tile (Tile(..), setPosition) where
     Tiles cannot have overlapping positions.
 
 -}
-data Tile = Floor (Int, Int) | Wall (Int, Int) deriving (Show)
+data Tile = Floor (Int, Int) Bool | Wall (Int, Int) deriving (Show)
+
 
 {- position a
    PRE:       True
@@ -17,9 +18,9 @@ data Tile = Floor (Int, Int) | Wall (Int, Int) deriving (Show)
    EXAMPLES:  position (Floor (1, 1)) == (1, 1)
 -}
 position :: Tile -> (Int, Int)
-position (Floor a) = a
+position (Floor a _) = a
 position (Wall a)  = a
 
 setPosition :: Tile -> Int -> Int -> Tile
-setPosition (Floor _) x y = Floor (x, y)
+setPosition (Floor _ i) x y = Floor (x, y) i
 setPosition (Wall _)  x y = Wall (x, y)
