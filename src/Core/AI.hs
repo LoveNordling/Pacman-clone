@@ -3,7 +3,7 @@ import Data.List
 import Data.Array
 import Core.Board.Tile
 import Core.Board.Board
-
+import Debug.Trace
 {- validCoordinates arguments
    PRE:       True
    POST:      All coordinates that are adjacent to p.
@@ -101,7 +101,7 @@ aStar board goal start = aStarAux board goal [[start]] where
         aStarAux :: Board -> (Int, Int) -> [[(Int, Int)]] -> [(Int, Int)]
         aStarAux board _ [] = []
         aStarAux board goal paths
-          | any (\p -> last p == goal) paths = head (filter (\p-> last p == goal) paths)
+          | any (\p -> last p == goal) paths = tail (head (filter (\p-> last p == goal) paths))
           | otherwise =
             let
               best = snd . minimum $ costOfPaths paths goal
