@@ -10,6 +10,7 @@ module Core.Board.Actor (Actor(..)) where
 -}
 data Actor = Player   (Float, Float) Direction Direction
            | Computer (Float, Float) Direction Paths
+           deriving (Show)
 
 -- Represents the score of a player.
 type Score = Int

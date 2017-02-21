@@ -2,10 +2,14 @@ module Core.GraphicsEngine (render, tileSize) where
 import Data.Array
 import Graphics.Gloss
 import Graphics.Gloss.Interface.Pure.Game
+
 import Core.Board.Actor
 import Core.Board.Board
 import Core.Board.Tile
 import Core.Board.GameState
+import Core.Extras
+
+{-# ANN module "HLint: Ignore Use mappend" #-}
 
 mapSize :: Int
 mapSize = 1000
@@ -24,7 +28,7 @@ tileSize n = round (10 * sqrt ( fromIntegral (mapSize) / fromIntegral (n) ))
    EXAMPLES:  render  ==
 -}
 render :: GameState -> Picture
-render (State t p c) = drawMap t p c
+render (State t _ p c) = drawMap t p c
 
 {- drawMap t p c
    PRE:           True
@@ -58,7 +62,7 @@ drawMap b p c =
         -}
         drawInterior :: Tiles -> Int -> [Picture] -> [Picture]
         drawInterior []             d acc = acc
-        drawInterior ((Floor p True):ts) d acc = drawInterior ts d ((pictures [makeRectangle p d red, makeTreasure p d yellow]):acc)
+        drawInterior ((Floor p True):ts) d acc = drawInterior ts d ((makeRectangle p d red):(makeCircle p d yellow):acc)
         drawInterior ((Floor p _):ts) d acc = drawInterior ts d ((makeRectangle p d red):acc)
         drawInterior ((Wall p):ts)  d acc = drawInterior ts d ((makeRectangle p d black):acc)
         {- makeRectangle p d c
@@ -68,7 +72,13 @@ drawMap b p c =
         -}
         makeRectangle :: (Int, Int) -> Int -> Color -> Picture
         makeRectangle p d c = translateAndColor p d c (rectangleSolid (fromIntegral d) (fromIntegral d))
-
+        {- makeCircle p d c
+           PRE:       p must be valid coordinates.
+           POST:      A circle of size d, color c on position p.
+           EXAMPLES:  makeCircle ==
+        -}
+        makeCircle :: (Int, Int) -> Int -> Color -> Picture
+        makeCircle p d c = translateAndColor p d c (circleSolid (fromIntegral (d `div` 3)))
         {- translateAndColor p d c s
            PRE:       p must be valid coordinates
            POST:      Shape s positioned based on p and d with color c.
@@ -76,34 +86,3 @@ drawMap b p c =
         -}
         translateAndColor :: (Position a) => (a, a) -> Int -> Color -> Picture -> Picture
         translateAndColor p d c = (setCoordinate p $ fromIntegral d) . color c
-
-        makeTreasure :: (Int, Int) -> Int -> Color -> Picture
-        makeTreasure p d c = translateAndColor p d c (circleSolid (fromIntegral (d `div` 3)))
-
-
--- translateCoordinates :: (Float, Float) -> (Int, Int)
--- translateCoordinates (x, y) = (round x, round y)
-
-class Position a where
-  {- setCoordinate c d p
-     PRE:       True
-     POST:      p with new coordiantes based on c and d.
-     EXAMPLES:  setCoordinate  ==
-  -}
-  setCoordinate :: (a, a) -> Int -> Picture -> Picture
-
-instance Position Int where
-  setCoordinate (x, y) d p =
-    let
-      newX = fromIntegral (x * d) - (fromIntegral d/2) - 100
-      newY = fromIntegral (y * d) - (fromIntegral d/2) - 100
-    in
-      translate newX newY p
-
-instance Position Float where
-  setCoordinate (x, y) d p =
-    let
-      newX =  (x * (fromIntegral d)) - ( fromIntegral d / 2) - 100
-      newY =  (y * (fromIntegral d)) - ( fromIntegral d / 2) - 100
-    in
-      translate newX newY p

@@ -8,8 +8,7 @@ import Core.Board.Actor
 import Core.Board.Board
 import Core.Board.Tile
 import Core.AI
-
-import Debug.Trace
+import Core.Extras
 
 -- The FPS of the game
 fps :: Int
@@ -23,7 +22,8 @@ aiSpeed     = actorSpeed 2 (fromIntegral fps)
 {- actorSpeed s f
    PRE:       fps > 0
    POST:      A speed as the ratio of s and f
-   EXAMPLES:  actorSpeed  ==
+   EXAMPLES:  actorSpeed 5 10   == (0.5, 0.5)
+              actorSpeed 1 (-5) == (-0.2, -0.2)
 -}
 actorSpeed :: Float -> Float -> (Float, Float)
 actorSpeed speed fps = (speed / fps, speed / fps)
@@ -31,7 +31,7 @@ actorSpeed speed fps = (speed / fps, speed / fps)
 {- step s g
    PRE:       True
    POST:      g with updated state
-   EXAMPLES:  step  ==
+   EXAMPLES:  step 1 state gives a
 -}
 step :: Float -> GameState -> GameState
 step _ state = moveActors (setMovement state)
@@ -51,7 +51,7 @@ handleKeyEvents _ state = state
    EXAMPLES:  changePlayerMovement ==
 -}
 changePlayerMovement :: GameState -> SpecialKey -> GameState
-changePlayerMovement (State t (Player position direction nextDirection) c) k =
+changePlayerMovement (State t s (Player position direction nextDirection) c) k =
   let
     next = case k of
             KeyUp    -> (0, 1)
@@ -60,7 +60,7 @@ changePlayerMovement (State t (Player position direction nextDirection) c) k =
             KeyRight -> (1, 0)
             _        -> nextDirection
   in
-    State t (Player position direction next) c
+    State t s (Player position direction next) c
 
 {- moveActors s
    PRE:       True
@@ -68,12 +68,13 @@ changePlayerMovement (State t (Player position direction nextDirection) c) k =
    EXAMPLES:  moveActors  ==
 -}
 moveActors :: GameState -> GameState
-moveActors (State b (Player playerPosition playerDirection n) (Computer aiPosition aiDirection p)) =
+moveActors (State b s (Player playerPosition playerDirection n) (Computer aiPosition aiDirection p)) =
   let
-    aiMovement = aiPosition + aiDirection * aiSpeed
-    plMovement = playerPosition + playerDirection * playerSpeed
+    aiMovement  = aiPosition + aiDirection * aiSpeed
+    plMovement  = playerPosition + playerDirection * playerSpeed
+    (b', score) = checkForTreasure b s plMovement
   in
-    State b (Player plMovement playerDirection n) (Computer aiMovement aiDirection p)
+    State b' score (Player plMovement playerDirection n) (Computer aiMovement aiDirection p)
 
 {- setMovement s
    PRE:       True
@@ -81,7 +82,7 @@ moveActors (State b (Player playerPosition playerDirection n) (Computer aiPositi
    EXAMPLES:  setMovement ==
 -}
 setMovement :: GameState -> GameState
-setMovement (State b p c) = State b (setPlayerMovement b p) (setAIMovement b p c)
+setMovement (State b s p c) = State b s (setPlayerMovement b p) (setAIMovement b p c)
 
 {- setAIMovement b p c
    PRE:       True
@@ -90,9 +91,9 @@ setMovement (State b p c) = State b (setPlayerMovement b p) (setAIMovement b p c
 -}
 setAIMovement :: Board -> Actor -> Actor -> Actor
 setAIMovement board (Player xy _ _) (Computer position direction path)
-  | length path == 0   = Computer position direction (calculateAIMovement board xy position)
-  | direction == (0,0) = changeAIDirection position [(nearestTile position)] (calculateAIMovement board xy position)
-  | otherwise          =
+  | null path      = Computer position direction (calculateAIMovement board xy position)
+  | zero direction = changeAIDirection position [(nearestTile position)] (calculateAIMovement board xy position)
+  | otherwise      =
     if (hasReachedDestination aiSpeed position (head path))
       then changeAIDirection position path (calculateAIMovement board xy position)
       else Computer position direction path
@@ -112,7 +113,7 @@ setAIMovement board (Player xy _ _) (Computer position direction path)
         [] -> [s]
         ps -> ps
     {- changeAIDirection oldPath newPath
-       PRE:       True
+       PRE:       oldPath and newPath must not be empty.
        POST:      ... a computer with
        EXAMPLES:  changeAIDirection ==
     -}
@@ -133,7 +134,7 @@ setAIMovement board (Player xy _ _) (Computer position direction path)
 setPlayerMovement :: Board -> Actor -> Actor
 setPlayerMovement board player@(Player position (0,0) (0,0)) = player
 setPlayerMovement board player@(Player position direction nextDirection)
-  | direction + nextDirection == (0,0) = Player position nextDirection nextDirection
+  | zero (direction + nextDirection) = Player position nextDirection nextDirection -- fixes 180 movement delay bug.
   | otherwise =
     if (hasReachedDestination playerSpeed position (nearestTile position))
       then Player position (changePlayerDirection board position direction nextDirection) nextDirection
@@ -155,6 +156,33 @@ setPlayerMovement board player@(Player position direction nextDirection)
             then direction
             else (0, 0)
 
+{- checkForTreasure b s p
+   PRE:       True
+   POST:      ...
+   EXAMPLES:  checkForTreasure ==
+-}
+checkForTreasure :: Board -> Int -> (Float, Float) -> (Board, Int)
+checkForTreasure board score p =
+  let
+    position = nearestTile p
+  in
+    if foundTreasure board position
+      then (board // [(position, (Floor position False))], score + 1)
+      else (board, score)
+      where
+        {- foundTreasure arguments
+           PRE:           pre-condition on the arguments
+           POST:          post-condition on the result, in terms of the arguments
+           SIDE EFFECTS:  if any, including exceptions
+           EXAMPLES:      foundTreasure ==
+           VARIANT:       None
+        -}
+        foundTreasure :: Board -> (Int, Int) -> Bool
+        foundTreasure board position =
+          case (board ! position) of
+            (Floor _ True) -> True
+            _              -> False
+
 {- nearestTile p
    PRE:       True
    POST:      A nearest whole number position to p.
@@ -164,7 +192,7 @@ nearestTile :: (Float, Float) -> (Int, Int)
 nearestTile (a, b) = (round a, round b)
 
 {- isValidMove b p
-   PRE:       True
+   PRE:       b must have element with index p
    POST:      True if element with key p in b is a valid tile to move to, otherwise False.
    EXAMPLES:  isValidMove board (0,0) gives True if element with key (0,0) is a floor.
 -}
