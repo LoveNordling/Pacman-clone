@@ -8,8 +8,9 @@ module Core.Board.Actor (Actor(..)) where
   REPRESENTATION INVARIANT:
     The coordinates of the player and computer must not be out of bounds compared to the maps they are occupying. The components of the direction of the player and computer must be between -1 and 1.
 -}
-data Actor = Player   (Float, Float) Direction Score
+data Actor = Player   (Float, Float) Direction Direction
            | Computer (Float, Float) Direction Paths
+           deriving (Show)
 
 -- Represents the score of a player.
 type Score = Int
