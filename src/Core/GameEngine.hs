@@ -68,12 +68,12 @@ changePlayerMovement (State t (Player position direction nextDirection) c) k =
    EXAMPLES:  moveActors  ==
 -}
 moveActors :: GameState -> GameState
-moveActors (State b (Player xy dx nd) (Computer pc dc path)) =
+moveActors (State b (Player playerPosition playerDirection n) (Computer aiPosition aiDirection p)) =
   let
-    aiMovement = pc + dc * aiSpeed
-    plMovement = xy + dx * playerSpeed
+    aiMovement = aiPosition + aiDirection * aiSpeed
+    plMovement = playerPosition + playerDirection * playerSpeed
   in
-    State b (Player plMovement dx nd) (Computer aiMovement dc path)
+    State b (Player plMovement playerDirection n) (Computer aiMovement aiDirection p)
 
 {- setMovement s
    PRE:       True
@@ -81,7 +81,7 @@ moveActors (State b (Player xy dx nd) (Computer pc dc path)) =
    EXAMPLES:  setMovement ==
 -}
 setMovement :: GameState -> GameState
-setMovement (State b p@(Player _ _ d) c) = State b (setPlayerMovement b p) (setAIMovement b p c)
+setMovement (State b p c) = State b (setPlayerMovement b p) (setAIMovement b p c)
 
 {- setAIMovement b p c
    PRE:       True
@@ -97,12 +97,10 @@ setAIMovement board (Player xy _ _) (Computer position direction path)
       then changeAIDirection position path (calculateAIMovement board xy position)
       else Computer position direction path
   where
-    {- calculateAIMovement arguments
-       PRE:           True
-       POST:          post-condition on the result, in terms of the arguments
-       SIDE EFFECTS:  None
-       EXAMPLES:      calculateAIMovement  ==
-       VARIANT:       None
+    {- calculateAIMovement b d s
+       PRE:       True
+       POST:      Shortest path in b from s to d
+       EXAMPLES:  calculateAIMovement ==
     -}
     calculateAIMovement :: Board -> (Float, Float) -> (Float, Float) -> [(Int, Int)]
     calculateAIMovement board destination start =
@@ -128,34 +126,34 @@ setAIMovement board (Player xy _ _) (Computer position direction path)
         Computer position direction newPath
 
 {- setPlayerMovement arguments
-   PRE:           pre-condition on the arguments
-   POST:          post-condition on the result, in terms of the arguments
-   EXAMPLES:      setPlayerMovement ==
+   PRE:       True?
+   POST:      ...
+   EXAMPLES:  setPlayerMovement ==
 -}
 setPlayerMovement :: Board -> Actor -> Actor
 setPlayerMovement board player@(Player position (0,0) (0,0)) = player
-setPlayerMovement board player@(Player position direction nextDirection) =
+setPlayerMovement board player@(Player position direction nextDirection)
+  | direction + nextDirection == (0,0) = Player position nextDirection nextDirection
+  | otherwise =
     if (hasReachedDestination playerSpeed position (nearestTile position))
-    then Player position (changePlayerDirection board position direction nextDirection) nextDirection
-    else player
-    where
-      {- setPlayerDirection arguments
-         PRE:           pre-condition on the arguments
-         POST:          post-condition on the result, in terms of the arguments
-         SIDE EFFECTS:  if any, including exceptions
-         EXAMPLES:      setPlayerDirection ==
-         VARIANT:       None
-      -}
-      changePlayerDirection :: Board -> (Float, Float) -> (Float, Float) -> (Float, Float) -> (Float, Float)
-      changePlayerDirection board position direction nextDirection =
-        let
-          approxPosition = approximatePosition position (fst playerSpeed)
-        in
-          if isValidMove board (nearestTile (approxPosition + nextDirection))
-            then nextDirection
-            else if isValidMove board (nearestTile (approxPosition + direction))
-              then direction
-              else (0, 0)
+      then Player position (changePlayerDirection board position direction nextDirection) nextDirection
+      else player
+  where
+    {- setPlayerDirection b c d n
+       PRE:       True
+       POST:      If tile at position c + d is valid, then d. Otherwise n
+       EXAMPLES:  setPlayerDirection ==
+    -}
+    changePlayerDirection :: Board -> (Float, Float) -> (Float, Float) -> (Float, Float) -> (Float, Float)
+    changePlayerDirection board position direction nextDirection =
+      let
+        approxPosition = approximatePosition position (fst playerSpeed)
+      in
+        if isValidMove board (nearestTile (approxPosition + nextDirection))
+          then nextDirection
+          else if isValidMove board (nearestTile (approxPosition + direction))
+            then direction
+            else (0, 0)
 
 {- nearestTile p
    PRE:       True
@@ -187,7 +185,7 @@ approximatePosition (x, y) speed =
     tx = fromIntegral (round x)
     ty = fromIntegral (round y)
   in
-    if abs (x - tx) < speed && abs (y - ty) < speed
+    if abs (x - tx) < speed*2/3 && abs (y - ty) < speed*2/3
       then (tx, ty)
       else (x, y)
 
