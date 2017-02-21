@@ -84,7 +84,6 @@ drawMap b p c =
 -- translateCoordinates :: (Float, Float) -> (Int, Int)
 -- translateCoordinates (x, y) = (round x, round y)
 
-
 class Position a where
   {- setCoordinate c d p
      PRE:       True
