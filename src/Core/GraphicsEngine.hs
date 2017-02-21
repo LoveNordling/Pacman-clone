@@ -50,8 +50,8 @@ drawMap b p c =
            EXAMPLES:  drawActor ==
         -}
         drawActor :: Actor -> Int -> Picture
-        drawActor (Player   p _ _) d = translateAndColor p d blue (circle $ fromIntegral d / 2)
-        drawActor (Computer p _ _) d = translateAndColor p d green (circle $ fromIntegral d / 2)
+        drawActor (Player   p _ _) d = translateAndColor p d blue (circleSolid $ fromIntegral d / 2)
+        drawActor (Computer p _ _) d = translateAndColor p d green (circleSolid $ fromIntegral d / 2)
         {- drawInterior t f acc
            PRE:       True
            POST:      The interiors in t to be displayed.

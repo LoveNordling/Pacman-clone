@@ -49,7 +49,7 @@ moveActor :: GameState -> GameState
 moveActor (State t (Player p m s) (Computer (x, y) (mx, my) ts)) =
   let
     aiMovement = (x, y) + ((mx, my) * computerSpeed)
-    plMovement =  p + m * playerSpeed
+    plMovement =  p     + m         * playerSpeed
   in
     if isValidMove t plMovement
       then
@@ -68,8 +68,10 @@ moveActor (State t (Player p m s) (Computer (x, y) (mx, my) ts)) =
 -- Perhaps: The AI will move one tile, recalculate, move to another tile, making the
 -- movements smooth. Still, it doesn't solve the problem of the high fps rate.
 moveAI :: GameState -> GameState
-moveAI gst@(State t p (Computer m n [])) = State t p (Computer m n (calculateAIMovement gst))
-moveAI gst@(State t p (Computer (x, y) (0,0) l)) = changeAIDirection (State t p (Computer (x, y) (0,0) [(round x, round y)]))
+moveAI gst@(State t p (Computer m n [])) =
+  State t p (Computer m n (calculateAIMovement gst))
+moveAI gst@(State t p (Computer (x, y) (0,0) l)) =
+  changeAIDirection (State t p (Computer (x, y) (0,0) [(round x, round y)]))
 moveAI gst@(State t player (Computer position direction (destination:ts))) =
   if (hasReachedDestination computerSpeed position destination)
     then changeAIDirection gst
