@@ -1,7 +1,8 @@
 module Core.Board.GameState (GameState(..)) where
 import Core.Board.Actor
 import Core.Board.Tile
-import Core.Board.Board
+-- import Core.Board.Board
+import Core.Board.Level
 
 
 {-
@@ -13,7 +14,8 @@ import Core.Board.Board
 -}
 -- data GameState = State Board Score Actor [Actor] Float
 
-data GameState = State Board Score Actors Float
+data GameState = State Level Score Actors Float
+               | Splash String
 
 -- Represents the score of the player
 type Score = Int

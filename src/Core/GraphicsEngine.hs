@@ -5,6 +5,7 @@ import Graphics.Gloss.Interface.Pure.Game
 
 import Core.Board.Actor
 import Core.Board.Board
+import qualified Core.Board.Level as Level
 import Core.Board.Tile
 import Core.Board.GameState
 import Core.Extras
@@ -28,7 +29,7 @@ tileSize n = round (10 * sqrt ( fromIntegral (mapSize) / fromIntegral (n) ))
    EXAMPLES:  render  ==
 -}
 render :: GameState -> Picture
-render (State t _ (Actors p c) _) = drawMap t p c
+render (State l _ (Actors p c) _) = drawMap (Level.getBoard l) p c
 
 {- drawMap t p c
    PRE:           True

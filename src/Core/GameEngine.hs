@@ -5,10 +5,11 @@ import Graphics.Gloss.Interface.Pure.Game
 
 import Core.Board.GameState
 import Core.Board.Actor
+import qualified Core.Board.Level as Level
 import Core.Board.Board
-import Core.Board.Tile
-import Core.AI
+import qualified Core.Board.Tile as Tile
 import Core.Extras
+import Core.AI
 
 import Debug.Trace
 
@@ -71,7 +72,11 @@ spawnAI (State b s (Actors p cs) t) =
    EXAMPLES:  handleKeyEvents  ==
 -}
 handleKeyEvents :: Event -> GameState -> GameState
-handleKeyEvents (EventKey (SpecialKey k) Down _ _) (State b s (Actors p c) t) = let p' = changePlayerMovement p k in State b s (Actors p' c) t
+handleKeyEvents (EventKey (SpecialKey k) Down _ _) (State b s (Actors p c) t) =
+  let
+    p' = changePlayerMovement p k
+  in
+    State b s (Actors p' c) t
 handleKeyEvents _ state = state
 
 {- changePlayerMovement s
@@ -97,13 +102,18 @@ changePlayerMovement (Player position direction nextDirection) k =
    EXAMPLES:  moveActors  ==
 -}
 moveActors :: GameState -> GameState
-moveActors (State b s (Actors player ai) t) =
+moveActors (State l s (Actors player ai) t) =
   let
-    newAI       = map (makeMove aiSpeed) ai
-    newPlayer   = makeMove playerSpeed player
-    (b', score) = checkForTreasure b s (position newPlayer)
+    newAI          = map (makeMove aiSpeed) ai
+    newPlayer      = makeMove playerSpeed player
+    -- (level, score) = Level.checkForTreasure level s (tilePosition player)
+    (level, score) = case Level.checkForTreasure l (nearestTile (position newPlayer)) of
+                      Just x  -> (x, s + 1)
+                      Nothing -> (l, s)
   in
-    State b' score (Actors newPlayer newAI) t
+    State level score (Actors newPlayer newAI) t
+
+
 
 {- setMovement s
    PRE:       True
@@ -111,7 +121,11 @@ moveActors (State b s (Actors player ai) t) =
    EXAMPLES:  setMovement ==
 -}
 setMovement :: GameState -> GameState
-setMovement (State board s (Actors player ai) t) = State board s (Actors (setPlayerMovement board player) (setAIMovements board player ai)) t
+setMovement (State level s (Actors player ai) t) =
+  let
+    board = Level.getBoard level
+  in
+    State level s (Actors (setPlayerMovement board player) (setAIMovements board player ai)) t
 
 {- setAIMovements b p c
    PRE:           True
@@ -120,7 +134,7 @@ setMovement (State board s (Actors player ai) t) = State board s (Actors (setPla
 -}
 setAIMovements :: Board -> Actor -> [Actor] -> [Actor]
 setAIMovements _ _ [] = []
-setAIMovements board p@(Player xy _ _) (c:cs) = (setAIMovement board xy c):(setAIMovements board p cs)
+setAIMovements board p@(Player xy _ _) c = map (setAIMovement board xy) c
   where
     {- setAIMovement b xy c acc
        PRE:           True
@@ -194,33 +208,6 @@ setPlayerMovement board player@(Player position direction nextDirection)
             then direction
             else (0, 0)
 
-{- checkForTreasure b s p
-   PRE:       True
-   POST:      ...
-   EXAMPLES:  checkForTreasure ==
--}
-checkForTreasure :: Board -> Int -> (Float, Float) -> (Board, Int)
-checkForTreasure board score p =
-  let
-    position = nearestTile p
-  in
-    if foundTreasure board position
-      then (board // [(position, (Floor position False))], score + 1)
-      else (board, score)
-      where
-        {- foundTreasure arguments
-           PRE:           pre-condition on the arguments
-           POST:          post-condition on the result, in terms of the arguments
-           SIDE EFFECTS:  if any, including exceptions
-           EXAMPLES:      foundTreasure ==
-           VARIANT:       None
-        -}
-        foundTreasure :: Board -> (Int, Int) -> Bool
-        foundTreasure board position =
-          case (board ! position) of
-            (Floor _ True) -> True
-            _              -> False
-
 {- nearestTile p
    PRE:       True
    POST:      A nearest whole number position to p.
@@ -237,7 +224,7 @@ nearestTile (a, b) = (round a, round b)
 isValidMove :: Board -> (Int, Int) -> Bool
 isValidMove board position =
   case (board ! position) of
-    (Floor _ _) -> True
+    (Tile.Floor _ _) -> True
     _           -> False
 
 {- approximatePosition p s

@@ -1,23 +1,14 @@
-module Core.Board.Board (Board, Tiles, createBoard, map1, map2) where
+module Core.Board.Board (Board, Tiles, createBoard) where
 import Data.Array
 import qualified Core.Board.Tile as Tile
 import Debug.Trace
--- The board/map
+
 type Board = Array (Int, Int) Tile.Tile
 
 -- The elements of a board
 type Tiles = [Tile.Tile]
 
 type Matrix = [Tiles]
-
--- elements of a map used for generating map
-itemFloor = Tile.Floor (0,0) True
-baseFloor = Tile.Floor (0, 0) False
-baseWall  = Tile.Wall (0, 0)
-
-u = itemFloor
-x = baseWall
-o = baseFloor
 
 {- createBoard m
    PRE:       Each row in m must have the same number of elements.
@@ -39,13 +30,12 @@ createBoard board =
          VARIANT:   |m|
       -}
       generateBoard :: Matrix -> Int -> Tiles -> Tiles
-      generateBoard []         _ acc = acc
-	  
+      generateBoard []     _ acc = acc
       generateBoard matrix x acc =
-		let 
-			(column, matrix') = getFirstColumn matrix
-		in
-			generateBoard matrix' (x+1) (acc ++ generateColumn column 0)
+        let
+          (column, matrix') = getFirstColumn matrix
+        in
+          generateBoard matrix' (x+1) (acc ++ generateColumn column 0)
         where
           {- generateColumn b c
              PRE:       True
@@ -56,75 +46,25 @@ createBoard board =
              VARIANT:   |b|
           -}
           generateColumn :: Tiles -> Int -> Tiles
-          generateColumn []     _ = []
-          generateColumn ts y = 
-			let
-				t = last ts
-				ts' = init ts
-			in (Tile.setPosition t x y):(generateColumn ts' (y+1))
-		  
-		  {- getFirstColumn m
-		     PRE: TRUE
-			 POST: The first column of m and matrix that is left when removing that column
-			 EXAMPLES:
-			 VARIANT: height of m
-		  -}
+          generateColumn [] _ = []
+          generateColumn ts y =
+            let
+            t = last ts
+            ts' = init ts
+          in
+            (Tile.setPosition t x y):(generateColumn ts' (y+1))
+    		  {- getFirstColumn m
+    		     PRE: TRUE
+    			 POST: The first column of m and matrix that is left when removing that column
+    			 EXAMPLES:
+    			 VARIANT: height of m
+    		  -}
           getFirstColumn :: Matrix -> (Tiles, Matrix)
-          getFirstColumn [] = ([],[])
-          getFirstColumn ([t]:ts) = (t:(fst (getFirstColumn ts)), [])
+          getFirstColumn []          = ([],[])
+          getFirstColumn ([t]:ts)    = (t:(fst (getFirstColumn ts)), [])
           getFirstColumn ((x:xs):ys) =
             let
               column = x : (fst (getFirstColumn ys))
               matrix = xs : (snd (getFirstColumn ys))
-            in (column, matrix)
-
----- MAP 1
-
-map1 = createBoard classicMap
-
-classicMap = [
-  [x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x],
-  [x,u,u,u,u,u,u,u,u,x,u,u,u,u,u,u,u,u,x],
-  [x,u,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,u,x],
-  [x,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,x],
-  [x,u,x,x,u,x,u,x,x,x,x,x,u,x,u,x,x,u,x],
-  [x,u,u,u,u,x,u,u,u,x,u,u,u,x,u,u,u,u,x],
-  [x,x,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,x,x],
-  [x,x,x,x,u,x,o,o,o,o,o,o,o,x,u,x,x,x,x],
-  [x,x,x,x,u,x,o,x,x,o,x,x,o,x,u,x,x,x,x],
-  [x,x,x,x,u,o,o,x,o,o,o,x,o,o,u,x,x,x,x],
-  [x,x,x,x,u,x,o,x,x,x,x,x,o,x,u,x,x,x,x],
-  [x,x,x,x,u,x,o,o,o,o,o,o,o,x,u,x,x,x,x],
-  [x,x,x,x,u,x,o,x,x,x,x,x,o,x,u,x,x,x,x],
-  [x,u,u,u,u,u,u,u,u,x,u,u,u,u,u,u,u,u,x],
-  [x,u,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,u,x],
-  [x,u,u,x,u,u,u,u,u,u,u,u,u,u,u,x,u,u,x],
-  [x,x,u,x,u,x,u,x,x,x,x,x,u,x,u,x,u,x,x],
-  [x,u,u,u,u,x,u,u,u,x,u,u,u,x,u,u,u,u,x],
-  [x,u,x,x,x,x,x,x,u,x,u,x,x,x,x,x,x,u,x],
-  [x,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,x],
-  [x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x]
- ]
-
-hardcodedMap1 = [
-  [baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall],
-  [baseWall, baseFloor, baseFloor, baseFloor, baseWall, baseWall, baseFloor, baseWall, baseFloor, baseWall],
-  [baseWall, baseFloor, baseWall, baseFloor, baseFloor, baseWall, baseFloor, itemFloor, baseFloor, baseWall],
-  [baseWall, baseFloor, baseWall, baseWall, baseFloor, baseFloor, baseFloor, baseWall, baseFloor, baseWall],
-  [baseWall, baseFloor, baseWall, baseFloor, baseFloor, baseWall, baseFloor, baseFloor, baseFloor, baseWall],
-  [baseWall, baseFloor, baseFloor, baseFloor, baseWall, baseWall, baseFloor, baseWall, baseFloor, baseWall],
-  [baseWall, baseFloor, baseWall, baseFloor, baseFloor, baseWall, baseFloor, baseWall, baseFloor, baseWall],
-  [baseWall, baseFloor, baseWall, baseWall, baseFloor, baseFloor, baseFloor, baseWall, baseFloor, baseWall],
-  [baseWall, baseFloor, itemFloor, baseFloor, baseFloor, baseWall, baseFloor, itemFloor, baseFloor, baseWall],
-  [baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall]
-  ]
-
---- Map 2 TODO: Needs update
-map2 = createBoard hardcodedMap2
-
-hardcodedMap2 = [
-    [baseWall, baseWall, baseWall, baseWall],
-    [baseWall, baseWall, baseFloor, baseWall],
-    [baseWall, baseFloor, baseFloor, baseWall],
-    [baseWall, baseWall, baseWall, baseWall]
-  ]
+            in
+              (column, matrix)

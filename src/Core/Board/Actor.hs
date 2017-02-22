@@ -1,4 +1,4 @@
-module Core.Board.Actor (Actor(..), Actors(..), makeMove, position) where
+module Core.Board.Actor (Actor(..), Actors(..), makeMove, position, tilePosition) where
 import Graphics.Gloss
 
 {-
@@ -30,8 +30,12 @@ type Direction = (Float, Float)
    EXAMPLES:  position (Player (5, -4)) == (5, -4)
 -}
 position :: Actor -> (Float, Float)
-position (Player   (a, b) _ _) = (fromIntegral (round a), fromIntegral (round b))
-position (Computer (a, b) _ _) = (fromIntegral (round a), fromIntegral (round b))
+position (Player   (a, b) _ _) = (a, b)
+position (Computer (a, b) _ _) = (a, b)
+
+tilePosition :: Actor -> (Int, Int)
+tilePosition (Player   (a, b) _ _) = (round a, round b)
+tilePosition (Computer (a, b) _ _) = (round a, round b)
 
 makeMove :: (Float, Float) -> Actor -> Actor
 makeMove speed (Player position direction n)   = Player (position + direction * speed) direction n
