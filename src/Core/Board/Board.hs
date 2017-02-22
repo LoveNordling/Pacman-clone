@@ -1,7 +1,7 @@
 module Core.Board.Board (Board, Tiles, createBoard, map1, map2) where
 import Data.Array
 import qualified Core.Board.Tile as Tile
-
+import Debug.Trace
 -- The board/map
 type Board = Array (Int, Int) Tile.Tile
 
@@ -36,10 +36,14 @@ createBoard board =
       -}
       generateBoard :: Matrix -> Int -> Tiles -> Tiles
       generateBoard []         _ acc = acc
-      generateBoard (row:rows) x acc =
-        generateBoard rows (x+1) (acc ++ (generateRow row 0))
+	  
+      generateBoard matrix x acc =
+		let 
+			(column, matrix') = getFirstColumn matrix
+		in
+			generateBoard matrix' (x+1) (acc ++ generateColumn column 0)
         where
-          {- generateRow b c
+          {- generateColumn b c
              PRE:       True
              POST:      Tiles based on b with position c.
              EXAMPLES:  generateRow [ baseWall, baseWall ] 0 0 == [ Wall (0,0), Wall (0,1) ]
@@ -47,13 +51,34 @@ createBoard board =
                         generateRow [ ] 0 0                    == [ ]
              VARIANT:   |b|
           -}
-          generateRow :: Tiles -> Int -> Tiles
-          generateRow []     _ = []
-          generateRow (t:ts) y = (Tile.setPosition t x y):(generateRow ts (y+1))
----- MAP 1
-map1 = createBoard hardcodedTiles1
+          generateColumn :: Tiles -> Int -> Tiles
+          generateColumn []     _ = []
+          generateColumn ts y = 
+			let
+				t = last ts
+				ts' = init ts
+			in (Tile.setPosition t x y):(generateColumn ts' (y+1))
+		  
+		  {- getFirstColumn m
+		     PRE: TRUE
+			 POST: The first column of m and matrix that is left when removing that column
+			 EXAMPLES:
+			 VARIANT: height of m
+		  -}
+          getFirstColumn :: Matrix -> (Tiles, Matrix)
+          getFirstColumn [] = ([],[])
+          getFirstColumn ([t]:ts) = (t:(fst (getFirstColumn ts)), [])
+          getFirstColumn ((x:xs):ys) =
+            let
+              column = x : (fst (getFirstColumn ys))
+              matrix = xs : (snd (getFirstColumn ys))
+            in (column, matrix)
 
-hardcodedTiles1 = [
+---- MAP 1
+
+map1 = createBoard hardcodedMap1
+
+hardcodedMap1 = [
   [baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall],
   [baseWall, baseFloor, baseFloor, baseFloor, baseWall, baseWall, baseFloor, baseWall, baseFloor, baseWall],
   [baseWall, baseFloor, baseWall, baseFloor, baseFloor, baseWall, baseFloor, itemFloor, baseFloor, baseWall],
@@ -67,11 +92,11 @@ hardcodedTiles1 = [
   ]
 
 --- Map 2 TODO: Needs update
-map2 = createBoard hardcodedTiles2
+map2 = createBoard hardcodedMap2
 
-hardcodedTiles2 = [
+hardcodedMap2 = [
     [baseWall, baseWall, baseWall, baseWall],
-    [baseWall, baseFloor, baseFloor, baseWall],
+    [baseWall, baseWall, baseFloor, baseWall],
     [baseWall, baseFloor, baseFloor, baseWall],
     [baseWall, baseWall, baseWall, baseWall]
   ]
