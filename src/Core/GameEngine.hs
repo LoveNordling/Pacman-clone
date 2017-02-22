@@ -14,10 +14,14 @@ import Core.Extras
 fps :: Int
 fps = 60
 
---Maximus amount of AIs
+--Maximum amount of AIs
+maxAI :: Int
 maxAI = 5
---SpawnTime
-spawnTime = 2.0
+--The time it takes for a ghost to spawn
+spawnTime :: Float
+spawnTime = 10.0
+--The amount of time between each frame (Used for Ghost spawning)
+timeStep :: Float
 timeStep = 1/(fromIntegral fps)
 
 -- The player and AI speeds
@@ -44,6 +48,12 @@ actorSpeed speed fps = (speed / fps, speed / fps)
 step :: Float -> GameState -> GameState
 step _ state = spawnAI (moveActors (setMovement state))
 
+
+{- spawnAI (State b s p cs t)
+   PRE: 
+   POST:     The state with a new ghost if t > spawnTime and length cs < maxAI
+   EXAMPLES:
+-}
 spawnAI :: GameState -> GameState
 spawnAI (State b s p cs t) = 
     let
