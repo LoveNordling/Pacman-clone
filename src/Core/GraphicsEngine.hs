@@ -28,7 +28,7 @@ tileSize n = round (10 * sqrt ( fromIntegral (mapSize) / fromIntegral (n) ))
    EXAMPLES:  render  ==
 -}
 render :: GameState -> Picture
-render (State t _ p c _) = drawMap t p c
+render (State t _ (Actors p c) _) = drawMap t p c
 
 {- drawMap t p c
    PRE:           True

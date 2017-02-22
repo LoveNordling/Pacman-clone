@@ -1,4 +1,5 @@
-module Core.Board.Actor (Actor(..)) where
+module Core.Board.Actor (Actor(..), Actors(..), makeMove, position) where
+import Graphics.Gloss
 
 {-
   REPRESENTATION CONVENTION:
@@ -11,6 +12,8 @@ module Core.Board.Actor (Actor(..)) where
 data Actor = Player   (Float, Float) Direction Direction
            | Computer (Float, Float) Direction Paths
            deriving (Show)
+
+data Actors = Actors Actor [Actor] deriving (Show)
 
 -- Represents the score of a player.
 type Score = Int
@@ -29,3 +32,7 @@ type Direction = (Float, Float)
 position :: Actor -> (Float, Float)
 position (Player   (a, b) _ _) = (fromIntegral (round a), fromIntegral (round b))
 position (Computer (a, b) _ _) = (fromIntegral (round a), fromIntegral (round b))
+
+makeMove :: (Float, Float) -> Actor -> Actor
+makeMove speed (Player position direction n)   = Player (position + direction * speed) direction n
+makeMove speed (Computer position direction n) = Computer (position + direction * speed) direction n
