@@ -1,4 +1,7 @@
-module Core.Extras (Position, setCoordinate, zero) where
+module Core.Extras.Common
+        ( Position, setCoordinate, zero )
+where
+
 import Graphics.Gloss
 
 --  Position class is used for Int and Float

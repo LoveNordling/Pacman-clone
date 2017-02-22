@@ -8,7 +8,7 @@ import Core.Board.Actor as Actor
 import qualified Core.Board.Level as Level
 import Core.Board.Board
 import qualified Core.Board.Tile as Tile
-import Core.Extras
+import Core.Extras.Common
 import Core.AI
 
 import Debug.Trace
@@ -31,8 +31,6 @@ timeStep = 1/(fromIntegral fps)
 playerSpeed, aiSpeed :: (Float, Float)
 playerSpeed = actorSpeed 3.8 (fromIntegral fps)
 aiSpeed     = actorSpeed 2 (fromIntegral fps)
--- standardComputer = (Computer (10,11) (0,0) [])
-
 
 {- actorSpeed s f
    PRE:       fps > 0

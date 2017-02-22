@@ -104,9 +104,9 @@ makeMove speed (Player   position direction n) = Player (position + direction * 
 makeMove speed (Computer position direction n) = Computer (position + direction * speed) direction n
 
 {- isAI a
-   PRE:           True
-   POST:          True if a is an AI, otherwise False.
-   EXAMPLES:      isAI  ==
+   PRE:       True
+   POST:      True if a is an AI, otherwise False.
+   EXAMPLES:  isAI  ==
 -}
 isAI :: Actor -> Bool
 isAI (Computer _ _ _) = True
