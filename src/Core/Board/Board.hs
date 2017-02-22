@@ -30,7 +30,7 @@ createBoard board =
     rows = length (board) - 1
     cols = length (board !! 0) - 1
   in
-    listArray ( (0,0), (rows, cols) ) (generateBoard board 0 [])
+    listArray ( (0,0), (cols, rows) ) (generateBoard board 0 [])
     where
       {- generateBoard m r acc
          PRE:       Each row in m must have the same number of elements.
@@ -95,12 +95,14 @@ classicMap = [
   [x,x,x,x,u,o,o,x,o,o,o,x,o,o,u,x,x,x,x],
   [x,x,x,x,u,x,o,x,x,x,x,x,o,x,u,x,x,x,x],
   [x,x,x,x,u,x,o,o,o,o,o,o,o,x,u,x,x,x,x],
-  [x,x,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,x,x],
-  [x,u,u,u,u,x,u,u,u,x,u,u,u,x,u,u,u,u,x],
-  [x,u,x,x,u,x,u,x,x,x,x,x,u,x,u,x,x,u,x],
-  [x,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,x],
-  [x,u,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,u,x],
+  [x,x,x,x,u,x,o,x,x,x,x,x,o,x,u,x,x,x,x],
   [x,u,u,u,u,u,u,u,u,x,u,u,u,u,u,u,u,u,x],
+  [x,u,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,u,x],
+  [x,u,u,x,u,u,u,u,u,u,u,u,u,u,u,x,u,u,x],
+  [x,x,u,x,u,x,u,x,x,x,x,x,u,x,u,x,u,x,x],
+  [x,u,u,u,u,x,u,u,u,x,u,u,u,x,u,u,u,u,x],
+  [x,u,x,x,x,x,x,x,u,x,u,x,x,x,x,x,x,u,x],
+  [x,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,x],
   [x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x]
  ]
 
