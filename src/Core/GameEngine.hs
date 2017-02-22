@@ -68,13 +68,18 @@ changePlayerMovement (State t s (Player position direction nextDirection) c) k =
    EXAMPLES:  moveActors  ==
 -}
 moveActors :: GameState -> GameState
-moveActors (State b s (Player playerPosition playerDirection n) (Computer aiPosition aiDirection p)) =
+moveActors (State b s (Player playerPosition playerDirection n) cs) =
   let
-    aiMovement  = aiPosition + aiDirection * aiSpeed
+    cs'  = aiMovementAux cs
+	    where
+		    aiMovementAux [] = []
+		    aiMovementAux ((Computer aiPosition aiDirection p):cs) = 
+			    let aiMovement = aiPosition + aiDirection * aiSpeed
+				in ( Computer aiMovement aiDirection p): (aiMovementAux cs)
     plMovement  = playerPosition + playerDirection * playerSpeed
     (b', score) = checkForTreasure b s plMovement
   in
-    State b' score (Player plMovement playerDirection n) (Computer aiMovement aiDirection p)
+    State b' score (Player plMovement playerDirection n) cs'
 
 {- setMovement s
    PRE:       True
@@ -82,7 +87,10 @@ moveActors (State b s (Player playerPosition playerDirection n) (Computer aiPosi
    EXAMPLES:  setMovement ==
 -}
 setMovement :: GameState -> GameState
-setMovement (State b s p c) = State b s (setPlayerMovement b p) (setAIMovement b p c)
+setMovement (State b s p cs) = State b s (setPlayerMovement b p) (setMovementAux cs)
+    where 
+        setMovementAux [] = []
+        setMovementAux (c:cs) = (setAIMovement b p c): (setMovementAux cs)
 
 {- setAIMovement b p c
    PRE:       True
