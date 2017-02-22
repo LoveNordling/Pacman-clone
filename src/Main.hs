@@ -22,7 +22,7 @@ backgroundColor = white
 
 -- Initial state of the game
 state :: GameState
-state = State (Board.map1) 0 (Actor.Player (1,1) (0,0) (0,0)) (Actor.Computer (8,8) (0,0) [])
+state = State (Board.map1) 0 (Actor.Player (1,1) (0,0) (0,0)) (Actor.Computer (9,9) (0,0) [])
 
 {- main
    PRE:       True

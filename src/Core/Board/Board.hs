@@ -15,6 +15,10 @@ itemFloor = Tile.Floor (0,0) True
 baseFloor = Tile.Floor (0, 0) False
 baseWall  = Tile.Wall (0, 0)
 
+u = itemFloor
+x = baseWall
+o = baseFloor
+
 {- createBoard m
    PRE:       Each row in m must have the same number of elements.
    POST:      An indexable list with elements from m, where an elements index is the position of the element in m.
@@ -76,7 +80,29 @@ createBoard board =
 
 ---- MAP 1
 
-map1 = createBoard hardcodedMap1
+map1 = createBoard classicMap
+
+classicMap = [
+  [x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x],
+  [x,u,u,u,u,u,u,u,u,x,u,u,u,u,u,u,u,u,x],
+  [x,u,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,u,x],
+  [x,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,x],
+  [x,u,x,x,u,x,u,x,x,x,x,x,u,x,u,x,x,u,x],
+  [x,u,u,u,u,x,u,u,u,x,u,u,u,x,u,u,u,u,x],
+  [x,x,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,x,x],
+  [x,x,x,x,u,x,o,o,o,o,o,o,o,x,u,x,x,x,x],
+  [x,x,x,x,u,x,o,x,x,o,x,x,o,x,u,x,x,x,x],
+  [x,x,x,x,u,o,o,x,o,o,o,x,o,o,u,x,x,x,x],
+  [x,x,x,x,u,x,o,x,x,x,x,x,o,x,u,x,x,x,x],
+  [x,x,x,x,u,x,o,o,o,o,o,o,o,x,u,x,x,x,x],
+  [x,x,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,x,x],
+  [x,u,u,u,u,x,u,u,u,x,u,u,u,x,u,u,u,u,x],
+  [x,u,x,x,u,x,u,x,x,x,x,x,u,x,u,x,x,u,x],
+  [x,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,x],
+  [x,u,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,u,x],
+  [x,u,u,u,u,u,u,u,u,x,u,u,u,u,u,u,u,u,x],
+  [x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x]
+ ]
 
 hardcodedMap1 = [
   [baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall],
