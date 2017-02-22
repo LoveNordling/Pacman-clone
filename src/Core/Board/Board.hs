@@ -95,12 +95,14 @@ classicMap = [
   [x,x,x,x,u,o,o,x,o,o,o,x,o,o,u,x,x,x,x],
   [x,x,x,x,u,x,o,x,x,x,x,x,o,x,u,x,x,x,x],
   [x,x,x,x,u,x,o,o,o,o,o,o,o,x,u,x,x,x,x],
-  [x,x,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,x,x],
-  [x,u,u,u,u,x,u,u,u,x,u,u,u,x,u,u,u,u,x],
-  [x,u,x,x,u,x,u,x,x,x,x,x,u,x,u,x,x,u,x],
-  [x,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,x],
-  [x,u,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,u,x],
+  [x,x,x,x,u,x,o,x,x,x,x,x,o,x,u,x,x,x,x],
   [x,u,u,u,u,u,u,u,u,x,u,u,u,u,u,u,u,u,x],
+  [x,u,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,u,x],
+  [x,o,u,x,u,u,u,u,u,u,u,u,u,u,u,x,u,u,x],
+  [x,x,u,x,u,x,u,x,x,x,x,x,u,x,u,x,u,x,x],
+  [x,u,u,u,u,x,u,u,u,x,u,u,u,x,u,u,u,u,x],
+  [x,u,x,x,x,x,x,x,u,x,u,x,x,x,x,x,x,u,x],
+  [x,o,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,x],
   [x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x]
  ]
 
