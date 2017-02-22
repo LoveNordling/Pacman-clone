@@ -4,7 +4,7 @@ import Data.Array
 import Graphics.Gloss.Interface.Pure.Game
 
 import Core.Board.GameState
-import Core.Board.Actor
+import Core.Board.Actor as Actor
 import qualified Core.Board.Level as Level
 import Core.Board.Board
 import qualified Core.Board.Tile as Tile
@@ -31,7 +31,7 @@ timeStep = 1/(fromIntegral fps)
 playerSpeed, aiSpeed :: (Float, Float)
 playerSpeed = actorSpeed 3.8 (fromIntegral fps)
 aiSpeed     = actorSpeed 2 (fromIntegral fps)
-standardComputer = (Computer (10,11) (0,0) [])
+-- standardComputer = (Computer (10,11) (0,0) [])
 
 
 {- actorSpeed s f
@@ -58,13 +58,15 @@ step _ state = spawnAI (moveActors (setMovement state))
    EXAMPLES:
 -}
 spawnAI :: GameState -> GameState
-spawnAI (State b s (Actors p cs) t) =
+spawnAI (State level s (Actor.Actors p cs) t) =
   let
     t' = t + timeStep
+    coords = Level.spawnPosition level
+    nextAI = Actor.createAI coords (0,0) []
   in
     if t' > spawnTime && length cs < maxAI
-      then State b s (Actors p (standardComputer:cs)) 0
-      else State b s (Actors p cs) t'
+      then State level s (Actor.Actors p (nextAI:cs)) 0
+      else State level s (Actor.Actors p cs) t'
 
 {- handleKeyEvents e g
    PRE:       True
@@ -72,11 +74,7 @@ spawnAI (State b s (Actors p cs) t) =
    EXAMPLES:  handleKeyEvents  ==
 -}
 handleKeyEvents :: Event -> GameState -> GameState
-handleKeyEvents (EventKey (SpecialKey k) Down _ _) (State b s (Actors p c) t) =
-  let
-    p' = changePlayerMovement p k
-  in
-    State b s (Actors p' c) t
+handleKeyEvents (EventKey (SpecialKey k) Down _ _) (State b s (Actor.Actors p c) t) = State b s (Actor.Actors (changePlayerMovement p k) c) t
 handleKeyEvents _ state = state
 
 {- changePlayerMovement s
@@ -85,8 +83,10 @@ handleKeyEvents _ state = state
    EXAMPLES:  changePlayerMovement ==
 -}
 changePlayerMovement :: Actor -> SpecialKey -> Actor
-changePlayerMovement (Player position direction nextDirection) k =
+changePlayerMovement player k =
   let
+    position = Actor.position player
+    (direction, nextDirection) = Actor.directions player
     next = case k of
             KeyUp    -> (0, 1)
             KeyLeft  -> (-1,0)
@@ -94,7 +94,7 @@ changePlayerMovement (Player position direction nextDirection) k =
             KeyRight -> (1, 0)
             _        -> nextDirection
   in
-    Player position direction next
+    Actor.createPlayer position direction next
 
 {- moveActors s
    PRE:       True
@@ -106,14 +106,11 @@ moveActors (State l s (Actors player ai) t) =
   let
     newAI          = map (makeMove aiSpeed) ai
     newPlayer      = makeMove playerSpeed player
-    -- (level, score) = Level.checkForTreasure level s (tilePosition player)
-    (level, score) = case Level.checkForTreasure l (nearestTile (position newPlayer)) of
+    (level, score) = case Level.checkForTreasure l (closestTile (position newPlayer)) of
                       Just x  -> (x, s + 1)
                       Nothing -> (l, s)
   in
     State level score (Actors newPlayer newAI) t
-
-
 
 {- setMovement s
    PRE:       True
@@ -134,49 +131,53 @@ setMovement (State level s (Actors player ai) t) =
 -}
 setAIMovements :: Board -> Actor -> [Actor] -> [Actor]
 setAIMovements _ _ [] = []
-setAIMovements board p@(Player xy _ _) c = map (setAIMovement board xy) c
+setAIMovements board p c = map (setAIMovement board (position p)) c
   where
-    {- setAIMovement b xy c acc
+    {- setAIMovement b xy c
        PRE:           True
        POST:
        EXAMPLES:      setAIMovement  ==
        VARIANT:       |c|
     -}
     setAIMovement :: Board -> (Float, Float) -> Actor -> Actor
-    setAIMovement board xy (Computer position direction path)
-      | null path      = Computer position direction (calculateAIMovement board xy position)
-      | zero direction = changeAIDirection position [(nearestTile position)] (calculateAIMovement board xy position)
-      | otherwise      =
-        if (hasReachedDestination aiSpeed position (head path))
-          then changeAIDirection position path (calculateAIMovement board xy position)
-          else Computer position direction path
-    {- calculateAIMovement b d s
-       PRE:       True
-       POST:      Shortest path in b from s to d
-       EXAMPLES:  calculateAIMovement ==
-    -}
-    calculateAIMovement :: Board -> (Float, Float) -> (Float, Float) -> [(Int, Int)]
-    calculateAIMovement board destination start =
-      let
-        d = nearestTile destination
-        s = nearestTile start
-      in
-        case (aStar board d s) of
-        [] -> [s]
-        ps -> ps
-    {- changeAIDirection oldPath newPath
-       PRE:       oldPath and newPath must not be empty.
-       POST:      ... a computer with
-       EXAMPLES:  changeAIDirection ==
-    -}
-    -- TODO: WRITE BETTER FUNCTION SPECIFICATION
-    changeAIDirection :: (Float, Float) -> [(Int, Int)] -> [(Int, Int)] -> Actor
-    changeAIDirection position oldPath@((x, y):_) newPath@((x', y'):_) =
-      let
-        -- Calculates the next direction?
-        direction = (fromIntegral x', fromIntegral y') - (fromIntegral x, fromIntegral y)
-      in
-        Computer position direction newPath
+    setAIMovement board xy c
+      | null paths     = Actor.createAI position direction (calculateAIMovement board xy position)
+      | zero direction = changeAIDirection position [(closestTile position)] (calculateAIMovement board xy position)
+      | otherwise =
+        if (hasReachedDestination aiSpeed position (head paths))
+          then changeAIDirection position paths (calculateAIMovement board xy position)
+          else Actor.createAI position direction paths
+      where
+        position  = Actor.position c
+        direction = Actor.direction c
+        paths     = Actor.paths c
+        {- calculateAIMovement b d s
+           PRE:       True
+           POST:      Shortest path in b from s to d
+           EXAMPLES:  calculateAIMovement ==
+        -}
+        calculateAIMovement :: Board -> (Float, Float) -> (Float, Float) -> [(Int, Int)]
+        calculateAIMovement board destination start =
+          let
+            d = closestTile destination
+            s = closestTile start
+          in
+            case (aStar board d s) of
+            [] -> [s]
+            ps -> ps
+        {- changeAIDirection oldPath newPath
+           PRE:       oldPath and newPath must not be empty.
+           POST:      ... a computer with
+           EXAMPLES:  changeAIDirection ==
+        -}
+        -- TODO: WRITE BETTER FUNCTION SPECIFICATION
+        changeAIDirection :: (Float, Float) -> [(Int, Int)] -> [(Int, Int)] -> Actor
+        changeAIDirection position oldPath@((x, y):_) newPath@((x', y'):_) =
+          let
+            -- Calculates the next direction?
+            direction = (fromIntegral x', fromIntegral y') - (fromIntegral x, fromIntegral y)
+          in
+            Actor.createAI position direction newPath
 
 {- setPlayerMovement arguments
    PRE:       True?
@@ -184,14 +185,15 @@ setAIMovements board p@(Player xy _ _) c = map (setAIMovement board xy) c
    EXAMPLES:  setPlayerMovement ==
 -}
 setPlayerMovement :: Board -> Actor -> Actor
-setPlayerMovement board player@(Player position (0,0) (0,0)) = player
-setPlayerMovement board player@(Player position direction nextDirection)
-  | zero (direction + nextDirection) = Player position nextDirection nextDirection -- fixes 180 movement delay bug.
+setPlayerMovement board player
+  | zero direction && zero nextDirection = player
+  | zero (direction + nextDirection)     = Actor.createPlayer position nextDirection nextDirection -- fixes 180 movement delay bug.
   | otherwise =
-    if (hasReachedDestination playerSpeed position (nearestTile position))
-      then Player position (changePlayerDirection board position direction nextDirection) nextDirection
+    if (hasReachedDestination playerSpeed position (closestTile position))
+      then Actor.createPlayer position (changePlayerDirection board position direction nextDirection) nextDirection
       else player
   where
+    (position, (direction, nextDirection)) = (Actor.position player, Actor.directions player)
     {- setPlayerDirection b c d n
        PRE:       True
        POST:      If tile at position c + d is valid, then d. Otherwise n
@@ -202,19 +204,19 @@ setPlayerMovement board player@(Player position direction nextDirection)
       let
         approxPosition = approximatePosition position (fst playerSpeed)
       in
-        if isValidMove board (nearestTile (approxPosition + nextDirection))
+        if isValidMove board (closestTile (approxPosition + nextDirection))
           then nextDirection
-          else if isValidMove board (nearestTile (approxPosition + direction))
+          else if isValidMove board (closestTile (approxPosition + direction))
             then direction
             else (0, 0)
 
-{- nearestTile p
+{- closestTile p
    PRE:       True
    POST:      A nearest whole number position to p.
-   EXAMPLES:  nearestTile ==
+   EXAMPLES:  closestTile ==
 -}
-nearestTile :: (Float, Float) -> (Int, Int)
-nearestTile (a, b) = (round a, round b)
+closestTile :: (Float, Float) -> (Int, Int)
+closestTile (a, b) = (round a, round b)
 
 {- isValidMove b p
    PRE:       b must have element with index p

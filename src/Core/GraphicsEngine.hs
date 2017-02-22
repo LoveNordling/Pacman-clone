@@ -3,7 +3,7 @@ import Data.Array
 import Graphics.Gloss
 import Graphics.Gloss.Interface.Pure.Game
 
-import Core.Board.Actor
+import qualified Core.Board.Actor as Actor
 import Core.Board.Board
 import qualified Core.Board.Level as Level
 import Core.Board.Tile
@@ -29,14 +29,14 @@ tileSize n = round (10 * sqrt ( fromIntegral (mapSize) / fromIntegral (n) ))
    EXAMPLES:  render  ==
 -}
 render :: GameState -> Picture
-render (State l _ (Actors p c) _) = drawMap (Level.getBoard l) p c
+render (State l _ (Actor.Actors p c) _) = drawMap (Level.getBoard l) p c
 
 {- drawMap t p c
    PRE:           True
    POST:          The image to be displayed, based on t with entities p and c.
    EXAMPLES:      drawMap ==
 -}
-drawMap :: Board -> Actor -> [Actor] -> Picture
+drawMap :: Board -> Actor.Actor -> [Actor.Actor] -> Picture
 drawMap b p cs =
   let
     board      = elems b
@@ -55,9 +55,14 @@ drawMap b p cs =
            POST:      The actors a to be displayed.
            EXAMPLES:  drawActor ==
         -}
-        drawActor :: Actor -> Int -> Picture
-        drawActor (Player   p _ _) d = translateAndColor p d blue (circle $ fromIntegral d / 2)
-        drawActor (Computer p _ _) d = translateAndColor p d green (circle $ fromIntegral d / 2)
+        drawActor :: Actor.Actor -> Int -> Picture
+        drawActor a d
+          | Actor.isAI a = translateAndColor p d green (circle $ fromIntegral d / 2)
+          | otherwise    = translateAndColor p d blue (circle $ fromIntegral d / 2)
+          where
+            p = Actor.position a
+        -- drawActor (Player   p _ _) d = translateAndColor p d blue (circle $ fromIntegral d / 2)
+        -- drawActor (Computer p _ _) d = translateAndColor p d green (circle $ fromIntegral d / 2)
         {- drawInterior t f acc
            PRE:       True
            POST:      The interiors in t to be displayed.

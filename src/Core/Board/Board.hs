@@ -49,10 +49,10 @@ createBoard board =
           generateColumn [] _ = []
           generateColumn ts y =
             let
-            t = last ts
-            ts' = init ts
-          in
-            (Tile.setPosition t x y):(generateColumn ts' (y+1))
+              t = last ts
+              ts' = init ts
+            in
+              (Tile.setPosition t x y):(generateColumn ts' (y+1))
     		  {- getFirstColumn m
     		     PRE: TRUE
     			 POST: The first column of m and matrix that is left when removing that column

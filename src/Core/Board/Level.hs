@@ -1,4 +1,4 @@
-module Core.Board.Level (Level, setLevel, getBoard, checkForTreasure) where
+module Core.Board.Level (Level, setLevel, getBoard, checkForTreasure, spawnPosition) where
 
 import Data.Array
 import qualified Core.Board.Board as Board
@@ -74,6 +74,9 @@ checkForTreasure level@(Level board cp n g) p =
       -}
       foundTreasure :: Board.Board -> (Int, Int) -> Bool
       foundTreasure board position = Tile.hasTreasure (board ! position)
+
+spawnPosition :: Level -> (Float, Float)
+spawnPosition (Level _ p _ _) = p
 
 -- LEVELS
 
