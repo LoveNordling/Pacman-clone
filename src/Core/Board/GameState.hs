@@ -10,7 +10,7 @@ import Core.Board.Board
   REPRESENTATION INVARIANT:
     Board must not be empty.
 -}
-data GameState = State Board Score Actor [Actor]
+data GameState = State Board Score Actor [Actor] Float
 
 -- Represents the score of the player
 type Score = Int

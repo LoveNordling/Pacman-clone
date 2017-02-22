@@ -14,10 +14,22 @@ import Core.Extras
 fps :: Int
 fps = 60
 
+--Maximum amount of AIs
+maxAI :: Int
+maxAI = 5
+--The time it takes for a ghost to spawn
+spawnTime :: Float
+spawnTime = 10.0
+--The amount of time between each frame (Used for Ghost spawning)
+timeStep :: Float
+timeStep = 1/(fromIntegral fps)
+
 -- The player and AI speeds
 playerSpeed, aiSpeed :: (Float, Float)
 playerSpeed = actorSpeed 3.8 (fromIntegral fps)
 aiSpeed     = actorSpeed 2 (fromIntegral fps)
+standardComputer = (Core.Board.Actor.Computer (10,11) (0,0) [])
+
 
 {- actorSpeed s f
    PRE:       fps > 0
@@ -34,8 +46,27 @@ actorSpeed speed fps = (speed / fps, speed / fps)
    EXAMPLES:  step 1 state gives a
 -}
 step :: Float -> GameState -> GameState
-step _ state = moveActors (setMovement state)
+step _ state = spawnAI (moveActors (setMovement state))
 
+
+{- spawnAI (State b s p cs t)
+   PRE: 
+   POST:     The state with a new ghost if t > spawnTime and length cs < maxAI
+   EXAMPLES:
+-}
+spawnAI :: GameState -> GameState
+spawnAI (State b s p cs t) = 
+    let
+	    t' = t + timeStep
+	in 
+	    if t' > spawnTime 
+		then 
+		    if length cs < maxAI
+			then
+		        let t' = 0
+			    in (State b s p (standardComputer:cs) t')
+			else (State b s p cs t')
+        else (State b s p cs t')
 {- handleKeyEvents e g
    PRE:       True
    POST:      g with updated state if e is an event on arrow keys.
@@ -51,7 +82,7 @@ handleKeyEvents _ state = state
    EXAMPLES:  changePlayerMovement ==
 -}
 changePlayerMovement :: GameState -> SpecialKey -> GameState
-changePlayerMovement (State t s (Player position direction nextDirection) c) k =
+changePlayerMovement (State t s (Player position direction nextDirection) c time) k =
   let
     next = case k of
             KeyUp    -> (0, 1)
@@ -60,7 +91,7 @@ changePlayerMovement (State t s (Player position direction nextDirection) c) k =
             KeyRight -> (1, 0)
             _        -> nextDirection
   in
-    State t s (Player position direction next) c
+    State t s (Player position direction next) c time
 
 {- moveActors s
    PRE:       True
@@ -68,7 +99,7 @@ changePlayerMovement (State t s (Player position direction nextDirection) c) k =
    EXAMPLES:  moveActors  ==
 -}
 moveActors :: GameState -> GameState
-moveActors (State b s (Player playerPosition playerDirection n) cs) =
+moveActors (State b s (Player playerPosition playerDirection n) cs t) =
   let
     cs'  = aiMovementAux cs
 	    where
@@ -79,7 +110,7 @@ moveActors (State b s (Player playerPosition playerDirection n) cs) =
     plMovement  = playerPosition + playerDirection * playerSpeed
     (b', score) = checkForTreasure b s plMovement
   in
-    State b' score (Player plMovement playerDirection n) cs'
+    State b' score (Player plMovement playerDirection n) cs' t
 
 {- setMovement s
    PRE:       True
@@ -87,10 +118,10 @@ moveActors (State b s (Player playerPosition playerDirection n) cs) =
    EXAMPLES:  setMovement ==
 -}
 setMovement :: GameState -> GameState
-setMovement (State b s p cs) = State b s (setPlayerMovement b p) (setMovementAux cs)
+setMovement (State b s p cs t) = State b s (setPlayerMovement b p) (setMovementAux cs) t
     where 
         setMovementAux [] = []
-        setMovementAux (c:cs) = (setAIMovement b p c): (setMovementAux cs)
+        setMovementAux (c:cs) = (setAIMovement b p c): (setMovementAux cs) 
 
 {- setAIMovement b p c
    PRE:       True
