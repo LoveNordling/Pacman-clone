@@ -35,14 +35,17 @@ render (State t _ p c) = drawMap t p c
    POST:          The image to be displayed, based on t with entities p and c.
    EXAMPLES:      drawMap ==
 -}
-drawMap :: Board -> Actor -> Actor -> Picture
-drawMap b p c =
+drawMap :: Board -> Actor -> [Actor] -> Picture
+drawMap b p cs =
   let
     board      = elems b
     dimensions = tileSize (length board)
     interior   = drawInterior board dimensions []
     character  = [drawActor p dimensions]
-    computer   = [drawActor c dimensions]
+    computer   = drawComputers cs
+        where
+            drawComputers [] = []
+            drawComputers (c:cs) = [drawActor c dimensions] ++ (drawComputers cs)
   in
     Pictures (interior ++ character ++ computer)
       where
