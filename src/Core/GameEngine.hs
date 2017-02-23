@@ -66,6 +66,7 @@ handleKeyEvents _ state = state
 changePlayerMovement :: Actor -> SpecialKey -> Actor
 changePlayerMovement player k =
   let
+    sprites  = Actor.sprites player
     position = Actor.position player
     (direction, nextDirection) = Actor.directions player
     next = case k of
@@ -75,7 +76,7 @@ changePlayerMovement player k =
             KeyRight -> (1, 0)
             _        -> nextDirection
   in
-    Actor.createPlayer position direction next
+    Actor.createPlayer position direction next sprites
 
 {- moveActors s
    PRE:       True
@@ -183,13 +184,13 @@ setAIMovements board p c = map (setAIMovement board (position p)) c
 setPlayerMovement :: Board -> Actor -> Actor
 setPlayerMovement board player
   | zero direction && zero nextDirection = player
-  | zero (direction + nextDirection)     = Actor.createPlayer position nextDirection nextDirection -- fixes 180 movement delay bug.
+  | zero (direction + nextDirection)     = Actor.createPlayer position nextDirection nextDirection sprites -- fixes 180 movement delay bug.
   | otherwise =
     if (hasReachedDestination playerSpeed position (closestTile position))
-      then Actor.createPlayer position (changePlayerDirection board position direction nextDirection) nextDirection
+      then Actor.createPlayer position (changePlayerDirection board position direction nextDirection) nextDirection sprites
       else player
   where
-    (position, (direction, nextDirection)) = (Actor.position player, Actor.directions player)
+    (position, (direction, nextDirection), sprites) = (Actor.position player, Actor.directions player, Actor.sprites player)
     {- setPlayerDirection b c d n
        PRE:       True
        POST:      If tile at position c + d is valid, then d. Otherwise n

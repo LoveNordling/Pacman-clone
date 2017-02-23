@@ -7,7 +7,7 @@ import qualified Core.Board.Tile as Tile
 
 -- REPRESENTATION:
 
--- First int is level number, second is level goal
+-- SSecond is AI position, third level number, fourth level goal
 data Level = Level Board.Board (Float, Float) Int Int deriving (Show)
 
 {- setLevel i
@@ -88,6 +88,7 @@ u = itemFloor
 x = baseWall
 o = baseFloor
 
+-- first element of the tuple is player start coord, second is AI start coord
 coords = [ ((1.0, 1.0), (8.0, 8.0)), ((1.0, 1.0), (10.0, 11.0)) ]
 levels = [ hardcodedMap1, level1 ]
 

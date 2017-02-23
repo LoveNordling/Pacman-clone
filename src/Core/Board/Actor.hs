@@ -1,6 +1,6 @@
 module Core.Board.Actor
-        ( Actor , Actors(..), Position
-        , makeMove , position
+        ( Actor , Actors(..), Sprite(..), Position
+        , makeMove , position, getPicture, sprites
         , createAI , createPlayer
         , directions , direction
         , paths, isAI )
@@ -15,11 +15,20 @@ import Graphics.Gloss
   REPRESENTATION INVARIANT:
     The coordinates of the player and computer must not be out of bounds compared to the maps they are occupying. The components of the direction of the player and computer must be between -1 and 1.
 -}
-data Actor = Player   Position Direction Direction
+data Actor = Player   Position Direction Direction [Sprite]
            | Computer Position Direction Paths
-           deriving (Show)
 
-data Actors = Actors Actor [Actor] deriving (Show)
+ {-
+   REPRESENTATION CONVENTION:
+      Actors represents all the actors on the board. Actors is given by a s, where a is an Actor and s is a list of Actors.
+
+   REPRESENTATION INVARIANT:
+      Second argument must be a Player.
+ -}
+data Actors = Actors Actor [Actor]
+
+data Sprite = Sprite Picture Direction
+
 
 -- Represents the score of a player.
 type Score = Int
@@ -32,6 +41,7 @@ type Direction = (Float, Float)
 
 type Position = (Float, Float)
 
+
 -------------------------------
 -- PLAYER ONLY FUNCTIONS
 -------------------------------
@@ -41,8 +51,8 @@ type Position = (Float, Float)
    POST:      A Player with position p, direction d, next direction n.
    EXAMPLES:  createPlayer ==
 -}
-createPlayer :: (Float, Float) -> Direction -> Direction -> Actor
-createPlayer p d n = Player p d n
+createPlayer :: (Float, Float) -> Direction -> Direction -> [Sprite] -> Actor
+createPlayer p d n s = Player p d n s
 
 {- directions a
    PRE:       a must be Player.
@@ -50,7 +60,36 @@ createPlayer p d n = Player p d n
    EXAMPLES:  direction ==
 -}
 directions :: Actor -> (Direction, Direction)
-directions (Player _ a b) = (a, b)
+directions (Player _ a b _) = (a, b)
+
+{- sprites a
+   PRE:       True
+   POST:      Sprites of a.
+   EXAMPLES:  sprites ==
+-}
+sprites :: Actor -> [Sprite]
+sprites (Player _ _ _ s) = s
+
+{- getPicture a d
+   PRE:       a must have at least one sprite.
+   POST:      Image from a with associated with d.
+   EXAMPLES:  getPicture  ==
+-}
+getPicture :: Actor -> Picture
+getPicture (Player _ (0,0) (0,0) ((Sprite s _):xs)) = s
+getPicture (Player _ (0,0) d     s)      = pictureFromDirection s d
+getPicture (Player _ d _ s)              = pictureFromDirection s d
+
+{- pictureFromDirection s d
+   PRE:       True
+   POST:      Element in s associated with d.
+   EXAMPLES:  pictureFromDirection ==
+   VARIANT:   |s|
+-}
+pictureFromDirection :: [Sprite] -> Direction -> Picture
+pictureFromDirection ((Sprite s x):xs) d
+  | length xs == 0 || d == x = s
+  | otherwise = pictureFromDirection xs d
 
 -------------------------------
 -- AI ONLY FUNCTIONS
@@ -82,8 +121,8 @@ paths (Computer _ _ p) = p
    EXAMPLES:  position (Player (5, -4)) == (5, -4)
 -}
 position :: Actor -> (Float, Float)
-position (Player   a _ _) = a
-position (Computer a _ _) = a
+position (Player   a _ _ _) = a
+position (Computer a _ _)   = a
 
 {- direction a
    PRE:       True
@@ -91,8 +130,8 @@ position (Computer a _ _) = a
    EXAMPLES:  direction  ==
 -}
 direction :: Actor -> Direction
-direction (Player   _ a _) = a
-direction (Computer _ a _) = a
+direction (Player   _ a _ _) = a
+direction (Computer _ a _)   = a
 
 {- makeMove s a
    PRE:       True
@@ -100,8 +139,8 @@ direction (Computer _ a _) = a
    EXAMPLES:  makeMove ==
 -}
 makeMove :: (Float, Float) -> Actor -> Actor
-makeMove speed (Player   position direction n) = Player (position + direction * speed) direction n
-makeMove speed (Computer position direction n) = Computer (position + direction * speed) direction n
+makeMove speed (Player   position direction n s) = Player (position + direction * speed) direction n s
+makeMove speed (Computer position direction n)   = Computer (position + direction * speed) direction n
 
 {- isAI a
    PRE:       True
