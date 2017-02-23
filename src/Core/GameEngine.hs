@@ -12,6 +12,8 @@ import Core.Board.Board
 import Core.Extras.Common
 import Core.AI
 
+import Debug.Trace
+
 -- The FPS of the game
 fps :: Int
 fps = 60
@@ -86,8 +88,11 @@ changePlayerMovement player k =
 -}
 moveActors :: GameState -> GameState
 moveActors state@(State l s (Actor.Actors player ai) t)
-  | levelGoal > s = State level score (Actor.Actors newPlayer newAI) t
-  | otherwise     = Splash "Level done!" (nextState state)
+  | levelGoal <= s = Splash "Level done!" (nextState state)
+  | otherwise      =
+    if newAI `caughtPlayer` newPlayer
+      then Splash "Game Over!" initialState
+      else State level score (Actor.Actors newPlayer newAI) t
   where
     levelGoal      = Level.getLevelGoal l
     newAI          = map (Actor.makeMove aiSpeed) ai
@@ -95,6 +100,18 @@ moveActors state@(State l s (Actor.Actors player ai) t)
     (level, score) = case Level.checkForTreasure l (closestTile (Actor.position newPlayer)) of
                       Just l' -> (l', s + 1)
                       Nothing -> (l, s)
+    {- caughtPlayer ai p
+       PRE:       True
+       POST:      True if any element in ai is on same position as p.
+       EXAMPLES:  caughtPlayer ==
+       VARIANT:   |ai|
+    -}
+    caughtPlayer :: [Actor.Actor] -> Actor.Actor -> Bool
+    caughtPlayer []            _ = False
+    caughtPlayer (ai:ais) player = (abs (x - a) < 0.5 && abs (y - b) < 0.5) || ais `caughtPlayer` player
+      where
+        (a, b) = Actor.position ai
+        (x, y) = Actor.position player
 moveActors state = state -- On game over!
 
 {- setMovement s
@@ -108,9 +125,7 @@ setMovement (State level s (Actor.Actors player ai) t) =
     board       = Level.getBoard level
     (newAI, t') = spawnAI level (t + timeStep) ai
   in
-    if newAI `caughtPlayer` player
-      then Splash "Game Over!" initialState
-      else State level s (Actor.Actors (setPlayerMovement board player) (setAIMovements board player newAI)) t'
+    State level s (Actor.Actors (setPlayerMovement board player) (setAIMovements board player newAI)) t'
   where
     {- spawnAI (State b s p cs t)
        PRE:
@@ -126,17 +141,7 @@ setMovement (State level s (Actor.Actors player ai) t) =
         if t > spawnTime && length cs < maxAI
           then ((nextAI:cs), 0)
           else (cs, t)
-    {- caughtPlayer ai p
-       PRE:       True
-       POST:      True if any element in ai is on same position as p.
-       EXAMPLES:  caughtPlayer ==
-       VARIANT:   |ai|
-    -}
-    caughtPlayer :: [Actor.Actor] -> Actor.Actor -> Bool
-    caughtPlayer []            _ = False
-    caughtPlayer (ai:ais) player = (hasReachedDestination aiSpeed (Actor.position ai) (round x, round y))
-      where
-        (x, y) = Actor.position player
+
 {- setAIMovements b p c
    PRE:           True
    POST:

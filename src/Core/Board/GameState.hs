@@ -50,4 +50,4 @@ newState (Just (level, position)) sprites score =
     player = Actor.createPlayer position (0,0) (0,0) sprites
     actors = (Actor.Actors player [])
   in
-    State level score actors 0
+    State level score actors 5
