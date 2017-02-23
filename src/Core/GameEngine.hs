@@ -126,6 +126,12 @@ setMovement (State level s (Actor.Actors player ai) t) =
         if t > spawnTime && length cs < maxAI
           then ((nextAI:cs), 0)
           else (cs, t)
+    {- caughtPlayer ai p
+       PRE:       True
+       POST:      True if any element in ai is on same position as p.
+       EXAMPLES:  caughtPlayer ==
+       VARIANT:   |ai|
+    -}
     caughtPlayer :: [Actor.Actor] -> Actor.Actor -> Bool
     caughtPlayer []            _ = False
     caughtPlayer (ai:ais) player = (hasReachedDestination aiSpeed (Actor.position ai) (round x, round y))
