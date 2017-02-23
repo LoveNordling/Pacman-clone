@@ -1,13 +1,17 @@
 module Core.GraphicsEngine (render, tileSize) where
+
 import Data.Array
 import Graphics.Gloss
+import Graphics.Gloss.Juicy
 import Graphics.Gloss.Interface.Pure.Game
 
-import Core.Board.Actor
-import Core.Board.Board
-import Core.Board.Tile
-import Core.Board.GameState
-import Core.Extras
+import qualified Core.Board.GameState as GameState
+import qualified Core.Board.Actor as Actor
+import qualified Core.Board.Board as Board
+import qualified Core.Board.Level as Level
+import qualified Core.Board.Tile as Tile
+import qualified Core.Extras.Common as Common
+import qualified Core.Extras.Resources as Resources
 
 {-# ANN module "HLint: Ignore Use mappend" #-}
 
@@ -19,55 +23,83 @@ mapSize = 1000
    POST:          the width and height of a tile based on n.
    EXAMPLES:      tileSize  ==
 -}
-tileSize :: Int -> Int
-tileSize n = round (10 * sqrt ( fromIntegral (mapSize) / fromIntegral (n) ))
+tileSize :: Board.Board -> Int
+tileSize b = round (10 * sqrt ( fromIntegral (mapSize) / fromIntegral (length b) ))
+
+{- mapDimensions b
+   PRE:       True.
+   POST:      Dimensions of b.
+   EXAMPLES:  mapDimensions ==
+-}
+mapDimensions :: Board.Board -> (Int, Int)
+mapDimensions b = fst $ bounds b
 
 {- render s
    PRE:       True
    POST:      A map drawn from state of s.
    EXAMPLES:  render  ==
 -}
-render :: GameState -> Picture
-render (State t _ p c _) = drawMap t p c
+render :: GameState.GameState -> Picture
+render (GameState.State l s (Actor.Actors p c) t) = drawMap (Level.getBoard l) s p c t
+render (GameState.Splash s _) = drawText s
+
+{- drawText s
+   PRE:       True
+   POST:      ...
+   EXAMPLES:  drawTexyt  ==
+-}
+drawText :: String -> Picture
+drawText s = (translate (-110) (-30) . color red) (Scale 0.3 0.3 (Text s))
 
 {- drawMap t p c
    PRE:           True
    POST:          The image to be displayed, based on t with entities p and c.
    EXAMPLES:      drawMap ==
 -}
-drawMap :: Board -> Actor -> [Actor] -> Picture
-drawMap b p cs =
+drawMap :: Board.Board -> Int -> Actor.Actor -> [Actor.Actor] -> Float -> Picture
+drawMap b s p cs time =
   let
     board      = elems b
-    dimensions = tileSize (length board)
+    dimensions = tileSize b
     interior   = drawInterior board dimensions []
-    character  = [drawActor p dimensions]
-    computer   = drawComputers cs
-        where
-            drawComputers [] = []
-            drawComputers (c:cs) = [drawActor c dimensions] ++ (drawComputers cs)
+    character  = [drawActor dimensions time p]
+    computer   = map (drawActor dimensions time) cs
+    scoreboard = [drawScoreboard dimensions s]
   in
-    Pictures (interior ++ character ++ computer)
+    Pictures (interior ++ character ++ computer ++ scoreboard)
       where
+        {- drawScoreboard s
+           PRE:       True
+           POST:      ...
+           EXAMPLES:  drawScoreboard  ==
+        -}
+        drawScoreboard :: Int -> Int -> Picture
+        drawScoreboard d s = translateAndColor (-9 :: Float, -4 :: Float) d red (Scale 0.3 0.3 (Text ("Score: " ++ (show s))))
         {- drawActor a f
            PRE:       True
            POST:      The actors a to be displayed.
            EXAMPLES:  drawActor ==
         -}
-        drawActor :: Actor -> Int -> Picture
-        drawActor (Player   p _ _) d = translateAndColor p d blue (circle $ fromIntegral d / 2)
-        drawActor (Computer p _ _) d = translateAndColor p d green (circle $ fromIntegral d / 2)
+        drawActor :: Int -> Float -> Actor.Actor -> Picture
+        drawActor d time a
+          | Actor.isAI a = translateAndColor p d green (circle $ fromIntegral d / 2)
+          | otherwise    = translateAndColor p d blue (Scale 0.1 0.1 s)
+          where
+            p = Actor.position a
+            n = Actor.direction a
+            t = round time
+            s = Actor.getPicture a
         {- drawInterior t f acc
            PRE:       True
            POST:      The interiors in t to be displayed.
            EXAMPLES:  drawInterior ==
            VARIANT:   |t|
         -}
-        drawInterior :: Tiles -> Int -> [Picture] -> [Picture]
+        drawInterior :: Board.Tiles -> Int -> [Picture] -> [Picture]
         drawInterior []             d acc = acc
-        drawInterior ((Floor p True):ts) d acc = drawInterior ts d ((makeRectangle p d red):(makeCircle p d yellow):acc)
-        drawInterior ((Floor p _):ts) d acc = drawInterior ts d ((makeRectangle p d red):acc)
-        drawInterior ((Wall p):ts)  d acc = drawInterior ts d ((makeRectangle p d black):acc)
+        drawInterior ((Tile.Floor p True):ts) d acc = drawInterior ts d ((makeRectangle p d (greyN 0.8)):(makeCircle p d yellow):acc)
+        drawInterior ((Tile.Floor p _):ts) d acc = drawInterior ts d ((makeRectangle p d (greyN 0.8)):acc)
+        drawInterior ((Tile.Wall p):ts)  d acc = drawInterior ts d ((makeRectangle p d black):acc)
         {- makeRectangle p d c
            PRE:       p must be valid coordinates.
            POST:      A rectangle of size d, color c on position p
@@ -87,5 +119,5 @@ drawMap b p cs =
            POST:      Shape s positioned based on p and d with color c.
            EXAMPLES:  translateAndColor ==
         -}
-        translateAndColor :: (Position a) => (a, a) -> Int -> Color -> Picture -> Picture
-        translateAndColor p d c = (setCoordinate p $ fromIntegral d) . color c
+        translateAndColor :: (Common.Position a) => (a, a) -> Int -> Color -> Picture -> Picture
+        translateAndColor p d c = (Common.setCoordinate p $ fromIntegral d) . color c

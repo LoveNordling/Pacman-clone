@@ -1,4 +1,11 @@
-module Core.Board.Actor (Actor(..)) where
+module Core.Board.Actor
+        ( Actor , Actors(..), Sprite(..), Position
+        , makeMove , position, getPicture, sprites
+        , createAI , createPlayer
+        , directions , direction
+        , paths, isAI )
+where
+import Graphics.Gloss
 
 {-
   REPRESENTATION CONVENTION:
@@ -8,9 +15,20 @@ module Core.Board.Actor (Actor(..)) where
   REPRESENTATION INVARIANT:
     The coordinates of the player and computer must not be out of bounds compared to the maps they are occupying. The components of the direction of the player and computer must be between -1 and 1.
 -}
-data Actor = Player   (Float, Float) Direction Direction
-           | Computer (Float, Float) Direction Paths
-           deriving (Show)
+data Actor = Player   Position Direction Direction [Sprite]
+           | Computer Position Direction Paths
+
+ {-
+   REPRESENTATION CONVENTION:
+      Actors represents all the actors on the board. Actors is given by a s, where a is an Actor and s is a list of Actors.
+
+   REPRESENTATION INVARIANT:
+      Second argument must be a Player.
+ -}
+data Actors = Actors Actor [Actor]
+
+data Sprite = Sprite Picture Direction
+
 
 -- Represents the score of a player.
 type Score = Int
@@ -21,11 +39,114 @@ type Paths = [(Int, Int)]
 -- First component is horizontal movement, second is vertical movement.
 type Direction = (Float, Float)
 
+type Position = (Float, Float)
+
+
+-------------------------------
+-- PLAYER ONLY FUNCTIONS
+-------------------------------
+
+{- createPlayer p d n
+   PRE:       True
+   POST:      A Player with position p, direction d, next direction n.
+   EXAMPLES:  createPlayer ==
+-}
+createPlayer :: (Float, Float) -> Direction -> Direction -> [Sprite] -> Actor
+createPlayer p d n s = Player p d n s
+
+{- directions a
+   PRE:       a must be Player.
+   POST:      Direction and next direction of a.
+   EXAMPLES:  direction ==
+-}
+directions :: Actor -> (Direction, Direction)
+directions (Player _ a b _) = (a, b)
+
+{- sprites a
+   PRE:       True
+   POST:      Sprites of a.
+   EXAMPLES:  sprites ==
+-}
+sprites :: Actor -> [Sprite]
+sprites (Player _ _ _ s) = s
+
+{- getPicture a d
+   PRE:       a must have at least one sprite.
+   POST:      Image from a with associated with d.
+   EXAMPLES:  getPicture  ==
+-}
+getPicture :: Actor -> Picture
+getPicture (Player _ (0,0) (0,0) ((Sprite s _):xs)) = s
+getPicture (Player _ (0,0) d     s)      = pictureFromDirection s d
+getPicture (Player _ d _ s)              = pictureFromDirection s d
+
+{- pictureFromDirection s d
+   PRE:       True
+   POST:      Element in s associated with d.
+   EXAMPLES:  pictureFromDirection ==
+   VARIANT:   |s|
+-}
+pictureFromDirection :: [Sprite] -> Direction -> Picture
+pictureFromDirection ((Sprite s x):xs) d
+  | length xs == 0 || d == x = s
+  | otherwise = pictureFromDirection xs d
+
+-------------------------------
+-- AI ONLY FUNCTIONS
+-------------------------------
+
+{- createAI c
+   PRE:       True
+   POST:      An AI with the start position c.
+   EXAMPLES:  createAI  ==
+-}
+createAI :: (Float, Float) -> Direction -> Paths -> Actor
+createAI p d ps = Computer p d ps
+
+{- paths c
+   PRE:       c must be computer
+   POST:      Paths of c.
+   EXAMPLES:  paths ==
+-}
+paths :: Actor -> Paths
+paths (Computer _ _ p) = p
+
+-------------------------------
+-- COMMON FUNCTIONS
+-------------------------------
+
 {- position a
    PRE:       True
    POST:      The current position of a.
    EXAMPLES:  position (Player (5, -4)) == (5, -4)
 -}
 position :: Actor -> (Float, Float)
-position (Player   (a, b) _ _) = (fromIntegral (round a), fromIntegral (round b))
-position (Computer (a, b) _ _) = (fromIntegral (round a), fromIntegral (round b))
+position (Player   a _ _ _) = a
+position (Computer a _ _)   = a
+
+{- direction a
+   PRE:       True
+   POST:      The direction of a.
+   EXAMPLES:  direction  ==
+-}
+direction :: Actor -> Direction
+direction (Player   _ a _ _) = a
+direction (Computer _ a _)   = a
+
+{- makeMove s a
+   PRE:       True
+   POST:      a with new position based on s
+   EXAMPLES:  makeMove ==
+-}
+makeMove :: (Float, Float) -> Actor -> Actor
+makeMove speed (Player   position direction n s) = Player (position + direction * speed) direction n s
+makeMove speed (Computer position direction n)   = Computer (position + direction * speed) direction n
+
+{- isAI a
+   PRE:       True
+   POST:      True if a is an AI, otherwise False.
+   EXAMPLES:  isAI  ==
+-}
+isAI :: Actor -> Bool
+isAI (Computer _ _ _) = True
+isAI _ = False

@@ -1,4 +1,4 @@
-module Core.Board.Tile (Tile(..), setPosition) where
+module Core.Board.Tile (Tile(..), position, setPosition, hasTreasure) where
 
 {-
   REPRESENTATION CONVENTION:
@@ -32,3 +32,7 @@ position (Wall a)  = a
 setPosition :: Tile -> Int -> Int -> Tile
 setPosition (Floor _ i) x y = Floor (x, y) i
 setPosition (Wall _)    x y = Wall (x, y)
+
+hasTreasure :: Tile -> Bool
+hasTreasure (Floor _ i) = i
+hasTreasure _           = False
