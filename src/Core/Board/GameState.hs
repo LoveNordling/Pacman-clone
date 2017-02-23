@@ -6,6 +6,7 @@ where
 
 import qualified Core.Board.Actor as Actor
 import qualified Core.Board.Level as Level
+import qualified Core.Extras.Sprite as Sprite
 import qualified Core.Extras.Resources as Resources
 
 
@@ -27,7 +28,7 @@ type Score = Int
 
 -- The initial state
 initialState :: GameState
-initialState = Splash "Press to Play" (newState (Level.setLevel 0) Resources.playerSprites 0)
+initialState = Splash "Press to Play" (newState (Level.setLevel 0) Sprite.player 0)
 
 {- nextState l a
    PRE:       True
@@ -43,11 +44,9 @@ nextState (State level score (Actor.Actors player _) _) =
    POST:      If l is Nothing, the state of game over with the next state, otherwise a state based on l, sp and sc.
    EXAMPLES:  newState ==
 -}
-newState :: Maybe (Level.Level, Actor.Position) -> [Actor.Sprite] -> Score -> GameState
+newState :: Maybe (Level.Level, Actor.Position) -> Sprite.Sprites -> Score -> GameState
 newState Nothing sprites score = Splash ("You win!") initialState
-newState (Just (level, position)) sprites score =
-  let
+newState (Just (level, position)) sprites score = State level score actors 5
+  where
     player = Actor.createPlayer position (0,0) (0,0) sprites
     actors = (Actor.Actors player [])
-  in
-    State level score actors 5

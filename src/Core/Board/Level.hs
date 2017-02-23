@@ -7,33 +7,36 @@ import Data.Array
 import qualified Core.Board.Board as Board
 import qualified Core.Board.Actor as Actor
 import qualified Core.Board.Tile as Tile
+import qualified Core.Extras.Resources as Resources
 
--- REPRESENTATION:
+{-
+  REPRESENTATION CONVENTION:
+    A level is given by Level b xy n g. The first argument, b, is the board, map, of the level while the second is the default position for the AIs to spawn on. The level number is n, and g is the number of treasures on a map.
 
--- SSecond is AI position, third level number, fourth level goal
+  REPRESENTATION INVARIANT:
+    The number of treasures on a map must be over 0.
+-}
 data Level = Level Board.Board (Float, Float) Int Int deriving (Show)
 
-{- nextLevel arguments
-   PRE:           pre-condition on the arguments
-   POST:          post-condition on the result, in terms of the arguments
-   SIDE EFFECTS:  if any, including exceptions
-   EXAMPLES:      nextLevel ==
-   VARIANT:       None
+{- nextLevel l
+   PRE:       True
+   POST:      A level with level number one above l.
+   EXAMPLES:  nextLevel ==
 -}
 nextLevel :: Level -> Maybe (Level, (Float, Float))
 nextLevel (Level _ _ n _) = setLevel (n+1)
 
 {- setLevel i
-   PRE:           i must exist=
-   EXAMPLES:      setLevel ==
+   PRE:       If number of pre-defined levels
+   EXAMPLES:  setLevel ==
 -}
 setLevel :: Int -> Maybe (Level, (Float, Float))
 setLevel i
-  | (length levels - 1) < i = Nothing
+  | (length Resources.levels) - 1 < i = Nothing
   | otherwise =
     let
-      tiles = levels !! i
-      coord = coords !! i
+      tiles = Resources.levels !! i
+      coord = Resources.coords !! i
       board = Board.createBoard tiles
       count = countTreasures tiles
       level = Level board (snd coord) i count
@@ -67,6 +70,11 @@ setLevel i
 getBoard :: Level -> Board.Board
 getBoard (Level b _ _ _) = b
 
+{- getLevelGoal l
+   PRE:       True
+   POST:      The level goal of l.
+   EXAMPLES:  getLevelGoal ==
+-}
 getLevelGoal :: Level -> Int
 getLevelGoal (Level _ _ _ g) = g
 
@@ -82,11 +90,9 @@ checkForTreasure level@(Level board cp n g) p =
     else Nothing
     where
       {- foundTreasure arguments
-         PRE:           pre-condition on the arguments
-         POST:          post-condition on the result, in terms of the arguments
-         SIDE EFFECTS:  if any, including exceptions
-         EXAMPLES:      foundTreasure ==
-         VARIANT:       None
+         PRE:       ...
+         POST:      post-condition on the result, in terms of the arguments
+         EXAMPLES:  foundTreasure ==
       -}
       foundTreasure :: Board.Board -> (Int, Int) -> Bool
       foundTreasure board position = Tile.hasTreasure (board ! position)
@@ -98,56 +104,3 @@ checkForTreasure level@(Level board cp n g) p =
 -}
 spawnPosition :: Level -> (Float, Float)
 spawnPosition (Level _ p _ _) = p
-
--- TODO: NEED TO FIGURE OUT A BETTER WAY FOR ALL OF THIS SHIT
--------------------------------------------
--- LEVELS
--------------------------------------------
-itemFloor = Tile.Floor (0,0) True
-baseFloor = Tile.Floor (0, 0) False
-baseWall  = Tile.Wall (0, 0)
-
-u = itemFloor
-x = baseWall
-o = baseFloor
-
--- first element of the tuple is player start coord, second is AI start coord
-coords = [ ((1.0, 1.0), (8.0, 8.0)), ((1.0, 1.0), (10.0, 11.0)) ]
-levels = [ hardcodedMap1, level1 ]
-
-level1 = [
-  [x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x],
-  [x,u,u,u,u,u,u,u,u,x,u,u,u,u,u,u,u,u,x],
-  [x,u,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,u,x],
-  [x,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,x],
-  [x,u,x,x,u,x,u,x,x,x,x,x,u,x,u,x,x,u,x],
-  [x,u,u,u,u,x,u,u,u,x,u,u,u,x,u,u,u,u,x],
-  [x,x,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,x,x],
-  [x,x,x,x,u,x,o,o,o,o,o,o,o,x,u,x,x,x,x],
-  [x,x,x,x,u,x,o,x,x,o,x,x,o,x,u,x,x,x,x],
-  [x,x,x,x,u,o,o,x,o,o,o,x,o,o,u,x,x,x,x],
-  [x,x,x,x,u,x,o,x,x,x,x,x,o,x,u,x,x,x,x],
-  [x,x,x,x,u,x,o,o,o,o,o,o,o,x,u,x,x,x,x],
-  [x,x,x,x,u,x,o,x,x,x,x,x,o,x,u,x,x,x,x],
-  [x,u,u,u,u,u,u,u,u,x,u,u,u,u,u,u,u,u,x],
-  [x,u,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,u,x],
-  [x,u,u,x,u,u,u,u,u,u,u,u,u,u,u,x,u,u,x],
-  [x,x,u,x,u,x,u,x,x,x,x,x,u,x,u,x,u,x,x],
-  [x,u,u,u,u,x,u,u,u,x,u,u,u,x,u,u,u,u,x],
-  [x,u,x,x,x,x,x,x,u,x,u,x,x,x,x,x,x,u,x],
-  [x,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,x],
-  [x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x]
- ]
-
-hardcodedMap1 = [
-   [baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall],
-   [baseWall, baseFloor, baseFloor, baseFloor, baseWall, baseWall, baseFloor, baseWall, baseFloor, baseWall],
-   [baseWall, baseFloor, baseWall, baseFloor, baseFloor, baseWall, baseFloor, itemFloor, baseFloor, baseWall],
-   [baseWall, baseFloor, baseWall, baseWall, baseFloor, baseFloor, baseFloor, baseWall, baseFloor, baseWall],
-   [baseWall, baseFloor, baseWall, baseFloor, baseFloor, baseWall, baseFloor, baseFloor, baseFloor, baseWall],
-   [baseWall, baseFloor, baseFloor, baseFloor, baseWall, baseWall, baseFloor, baseWall, baseFloor, baseWall],
-   [baseWall, baseFloor, baseWall, baseFloor, baseFloor, baseWall, baseFloor, baseWall, baseFloor, baseWall],
-   [baseWall, baseFloor, baseWall, baseWall, baseFloor, baseFloor, baseFloor, baseWall, baseFloor, baseWall],
-   [baseWall, baseFloor, itemFloor, baseFloor, baseFloor, baseWall, baseFloor, itemFloor, baseFloor, baseWall],
-   [baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall, baseWall]
-   ]

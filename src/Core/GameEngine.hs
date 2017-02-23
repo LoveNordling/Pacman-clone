@@ -6,6 +6,7 @@ import Graphics.Gloss.Interface.Pure.Game
 import qualified Core.Board.Actor as Actor
 import qualified Core.Board.Level as Level
 import qualified Core.Board.Tile as Tile
+import qualified Core.Extras.Sprite as Sprite
 import qualified Core.Extras.Resources as Resources
 import Core.Board.GameState
 import Core.Board.Board
@@ -136,7 +137,7 @@ setMovement (State level s (Actor.Actors player ai) t) =
     spawnAI level t cs =
       let
         coords = Level.spawnPosition level
-        nextAI = Actor.createAI coords (0,0) [] Resources.aiSprites
+        nextAI = Actor.createAI coords (0,0) [] Sprite.ai
       in
         if t > spawnTime && length cs < maxAI
           then ((nextAI:cs), 0)
@@ -190,7 +191,7 @@ setAIMovements board p c = map (setAIMovement board (Actor.position p)) c
            EXAMPLES:  changeAIDirection ==
         -}
         -- TODO: WRITE BETTER FUNCTION SPECIFICATION
-        changeAIDirection :: (Float, Float) -> [(Int, Int)] -> [(Int, Int)] -> [Actor.Sprite] -> Actor.Actor
+        changeAIDirection :: (Float, Float) -> [(Int, Int)] -> [(Int, Int)] -> Sprite.Sprites -> Actor.Actor
         changeAIDirection position oldPath@((x, y):_) newPath@((x', y'):_) sprites =
           let
             -- Calculates the next direction?

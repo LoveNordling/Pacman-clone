@@ -33,38 +33,37 @@ createBoard board =
       generateBoard []     _ acc = acc
       generateBoard matrix x acc =
         let
-          (column, matrix') = getFirstColumn matrix
+            (column, matrix') = getFirstColumn matrix
         in
-          generateBoard matrix' (x+1) (acc ++ generateColumn column 0)
+            generateBoard matrix' (x+1) (acc ++ generateColumn column 0)
         where
-          {- generateColumn b c
-             PRE:       True
-             POST:      Tiles based on b with position c.
-             EXAMPLES:  generateRow [ baseWall, baseWall ] 0 0 == [ Wall (0,0), Wall (0,1) ]
-                        generateRow [ baseWall, baseWall ] 1 0 == [ Wall (1,0), Wall (1,1) ]
-                        generateRow [ ] 0 0                    == [ ]
-             VARIANT:   |b|
-          -}
-          generateColumn :: Tiles -> Int -> Tiles
-          generateColumn [] _ = []
-          generateColumn ts y =
-            let
-              t = last ts
-              ts' = init ts
-            in
-              (Tile.setPosition t x y):(generateColumn ts' (y+1))
-    		  {- getFirstColumn m
-    		     PRE: TRUE
-    			 POST: The first column of m and matrix that is left when removing that column
-    			 EXAMPLES:
-    			 VARIANT: height of m
-    		  -}
-          getFirstColumn :: Matrix -> (Tiles, Matrix)
-          getFirstColumn []          = ([],[])
-          getFirstColumn ([t]:ts)    = (t:(fst (getFirstColumn ts)), [])
-          getFirstColumn ((x:xs):ys) =
-            let
-              column = x : (fst (getFirstColumn ys))
-              matrix = xs : (snd (getFirstColumn ys))
-            in
-              (column, matrix)
+            {-  generateColumn b c
+                PRE:       True
+                POST:      Tiles based on b with position c.
+                EXAMPLES:  generateRow [ baseWall, baseWall ] 0 0 == [ Wall (0,0), Wall (0,1) ]
+                generateRow [ baseWall, baseWall ] 1 0 == [ Wall (1,0), Wall (1,1) ]
+                generateRow [ ] 0 0                    == [ ]
+                VARIANT:   |b|
+            -}
+            generateColumn :: Tiles -> Int -> Tiles
+            generateColumn [] _ = []
+            generateColumn ts y =
+                let
+                    t = last ts
+                    ts' = init ts
+                in
+                    (Tile.setPosition t x y):(generateColumn ts' (y+1))
+            {-  getFirstColumn m
+                PRE:        TRUE
+                POST:       The first column of m and matrix that is left when removing that column
+                EXAMPLES:  ...
+                VARIANT:   height of m
+            -}
+            getFirstColumn :: Matrix -> (Tiles, Matrix)
+            getFirstColumn []          = ([],[])
+            getFirstColumn ([t]:ts)    = (t:(fst (getFirstColumn ts)), [])
+            getFirstColumn ((x:xs):ys) =
+                let
+                    column = x : (fst (getFirstColumn ys))
+                    matrix = xs : (snd (getFirstColumn ys))
+                in  (column, matrix)

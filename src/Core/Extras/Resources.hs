@@ -1,46 +1,63 @@
 module Core.Extras.Resources
-        ( loadSprites, playerSprites, aiSprites )
+        ( dazzleManRight, dazzleManLeft, monsterRight, monsterLeft
+        , levels, coords )
 where
 
-import Data.Maybe
-import Graphics.Gloss
-import Graphics.Gloss.Juicy
-import System.IO.Unsafe (unsafePerformIO)
+import qualified Core.Board.Tile as Tile
 
-import qualified Core.Board.Actor as Actor
-
-dazzleManClosedRight, dazzleManClosedLeft, dazzleManRight, dazzleManLeft :: String
-dazzleManClosedRight = "res/dazzleManClosedRight.png" -- unused
-dazzleManClosedLeft = "res/dazzleManClosedLeft.png" -- unused
+-- Path to the images used for the characters
+dazzleManRight, dazzleManLeft, monsterLeft, monsterRight :: String
 dazzleManRight = "res/dazzleManRight.png"
 dazzleManLeft  = "res/dazzleManLeft.png"
+monsterLeft    = "res/monsterLeft.png"
+monsterRight   = "res/monsterRight.png"
 
-monsterLeft, monsterRight :: String
-monsterLeft  = "res/monsterLeft.png"
-monsterRight = "res/monsterRight.png"
+-- TODO: NEED TO FIGURE OUT A BETTER WAY FOR ALL OF THIS SHIT
+-------------------------------------------
+-- LEVELS
+-------------------------------------------
+u = Tile.Floor (0,0) True
+o = Tile.Floor (0, 0) False
+x = Tile.Wall (0, 0)
 
--- The player sprites
-playerSprites :: [Actor.Sprite]
-playerSprites = loadSprites [ ((-1,0), dazzleManLeft), ((1,0), dazzleManRight) ]
+-- first element of the tuple is player start coord, second is AI start coord
+coords :: [ ((Float, Float), (Float, Float)) ]
+coords = [ ((1, 1), (8, 8)), ((1, 1), (10, 11)) ]
+levels = [ hardcodedMap1, level1 ]
 
-aiSprites :: [Actor.Sprite]
-aiSprites = loadSprites [ ((-1,0), monsterLeft), ((1,0), monsterRight) ]
+level1 = [
+  [x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x],
+  [x,u,u,u,u,u,u,u,u,x,u,u,u,u,u,u,u,u,x],
+  [x,u,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,u,x],
+  [x,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,x],
+  [x,u,x,x,u,x,u,x,x,x,x,x,u,x,u,x,x,u,x],
+  [x,u,u,u,u,x,u,u,u,x,u,u,u,x,u,u,u,u,x],
+  [x,x,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,x,x],
+  [x,x,x,x,u,x,o,o,o,o,o,o,o,x,u,x,x,x,x],
+  [x,x,x,x,u,x,o,x,x,o,x,x,o,x,u,x,x,x,x],
+  [x,x,x,x,u,o,o,x,o,o,o,x,o,o,u,x,x,x,x],
+  [x,x,x,x,u,x,o,x,x,x,x,x,o,x,u,x,x,x,x],
+  [x,x,x,x,u,x,o,o,o,o,o,o,o,x,u,x,x,x,x],
+  [x,x,x,x,u,x,o,x,x,x,x,x,o,x,u,x,x,x,x],
+  [x,u,u,u,u,u,u,u,u,x,u,u,u,u,u,u,u,u,x],
+  [x,u,x,x,u,x,x,x,u,x,u,x,x,x,u,x,x,u,x],
+  [x,u,u,x,u,u,u,u,u,u,u,u,u,u,u,x,u,u,x],
+  [x,x,u,x,u,x,u,x,x,x,x,x,u,x,u,x,u,x,x],
+  [x,u,u,u,u,x,u,u,u,x,u,u,u,x,u,u,u,u,x],
+  [x,u,x,x,x,x,x,x,u,x,u,x,x,x,x,x,x,u,x],
+  [x,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,x],
+  [x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x]
+ ]
 
-{- loadSprites s
-   PRE:       ...
-   POST:      ...
-   EXAMPLES:  loadSprites ==
-   VARIANT:   |s|
--}
-loadSprites :: [((Float, Float), String)] -> [Actor.Sprite]
-loadSprites []         = []
-loadSprites ((d,s):xs) = (Actor.Sprite (loadImage s) d):(loadSprites xs)
-  where
-  -- Borrowed from Gloss.Game
-  {- loadImage p
-     PRE:       p must be a valid path to a PNG image.
-     POST:      File at path p loaded as a picture.
-     EXAMPLES:  loadImage ==
-  -}
-  loadImage :: String -> Picture
-  loadImage path = fromMaybe (text "Could not load image.") (unsafePerformIO $ loadJuicyPNG path)
+hardcodedMap1 = [
+   [x, x, x, x, x, x, x, x, x, x],
+   [x, o, o, o, x, x, o, x, o, x],
+   [x, o, x, o, o, x, o, u, o, x],
+   [x, o, x, x, o, o, o, x, o, x],
+   [x, o, x, o, o, x, o, o, o, x],
+   [x, o, o, o, x, x, o, x, o, x],
+   [x, o, x, o, o, x, o, x, o, x],
+   [x, o, x, x, o, o, o, x, o, x],
+   [x, o, u, o, o, x, o, u, o, x],
+   [x, x, x, x, x, x, x, x, x, x]
+ ]

@@ -1,4 +1,4 @@
-module Core.GraphicsEngine (render, tileSize) where
+module Core.GraphicsEngine (render) where
 
 import Data.Array
 import Graphics.Gloss
@@ -25,7 +25,7 @@ mapSize = 1000
 -}
 tileSize :: Board.Board -> Int
 --tileSize b = 40         --TODO Change definitions of tileSize to constant
-tileSize b = 19*round (sqrt ( fromIntegral (mapSize) / fromIntegral (length b) ))
+tileSize b = 19 * round (sqrt ( fromIntegral (mapSize) / fromIntegral (length b) ))
 {- mapDimensions b
    PRE:       True.
    POST:      Dimensions of b.
@@ -50,6 +50,7 @@ render (GameState.Splash s _) = drawText s
 -}
 drawText :: String -> Picture
 drawText s = (translate (-110) (-30) . color red) (Scale 0.3 0.3 (Text s))
+-- Hardcoded because it's not possible tocalculate type Text width/height
 
 {- drawMap t p c
    PRE:           True
@@ -74,13 +75,11 @@ drawMap b p cs time =
         -}
         drawActor :: Int -> Float -> Actor.Actor -> Picture
         drawActor d time a = translateAndColor p d green (Scale 0.1 0.1 s)
-          -- | Actor.isAI a = translateAndColor p d green (Scale 0.1 0.1 s)
-          -- | otherwise    = translateAndColor p d blue (Scale 0.1 0.1 s)
           where
             p = Actor.position a
             n = Actor.direction a
-            t = round time
             s = Actor.getPicture a
+            t = round time
         {- drawInterior t f acc
            PRE:       True
            POST:      The interiors in t to be displayed.
@@ -88,10 +87,10 @@ drawMap b p cs time =
            VARIANT:   |t|
         -}
         drawInterior :: Board.Tiles -> Int -> [Picture] -> [Picture]
-        drawInterior []             d acc = acc
+        drawInterior []                       _ acc = acc
         drawInterior ((Tile.Floor p True):ts) d acc = drawInterior ts d ((makeRectangle p d (greyN 0.8)):(makeCircle p d yellow):acc)
-        drawInterior ((Tile.Floor p _):ts) d acc = drawInterior ts d ((makeRectangle p d (greyN 0.8)):acc)
-        drawInterior ((Tile.Wall p):ts)  d acc = drawInterior ts d ((makeRectangle p d black):acc)
+        drawInterior ((Tile.Floor p _):ts)    d acc = drawInterior ts d ((makeRectangle p d (greyN 0.8)):acc)
+        drawInterior ((Tile.Wall p):ts)       d acc = drawInterior ts d ((makeRectangle p d black):acc)
         {- makeRectangle p d c
            PRE:       p must be valid coordinates.
            POST:      A rectangle of size d, color c on position p
@@ -102,6 +101,7 @@ drawMap b p cs time =
         {- makeCircle p d c
            PRE:       p must be valid coordinates.
            POST:      A circle of size d, color c on position p.
+           EXAMPLES:  makeCircle ==
         -}
         makeCircle :: (Int, Int) -> Int -> Color -> Picture
         makeCircle p d c = translateAndColor p d c (circleSolid (fromIntegral (d `div` 3)))
@@ -109,11 +109,7 @@ drawMap b p cs time =
            PRE:       p must be valid coordinates
            POST:      Shape s positioned based on p and d with color c.
            EXAMPLES:  translateAndColor ==
-           EXAMPLES:  makeCircle ==
         -}
         translateAndColor :: (Common.Position a) => (a, a) -> Int -> Color -> Picture -> Picture
-        translateAndColor p d c =
-          let
-            rowLength = fromIntegral (round (sqrt (fromIntegral (length b))))
-          in
-            (Common.setCoordinate p (fromIntegral d) rowLength) . (color c)
+        translateAndColor p d c = Common.setCoordinate p (fromIntegral d) rowLength . (color c)
+          where rowLength = fromIntegral (round (sqrt (fromIntegral (length b))))

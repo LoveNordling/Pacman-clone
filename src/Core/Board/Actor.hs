@@ -1,11 +1,13 @@
 module Core.Board.Actor
-        ( Actor , Actors(..), Sprite(..), Position
+        ( Actor , Actors(..), Position, Direction
         , makeMove , position, getPicture, sprites
         , createAI , createPlayer
         , directions , direction
         , paths, isAI )
 where
 import Graphics.Gloss
+
+import qualified Core.Extras.Sprite as Sprite
 
 {-
   REPRESENTATION CONVENTION:
@@ -15,8 +17,8 @@ import Graphics.Gloss
   REPRESENTATION INVARIANT:
     The coordinates of the player and computer must not be out of bounds compared to the maps they are occupying. The components of the direction of the player and computer must be between -1 and 1.
 -}
-data Actor = Player   Position Direction Direction [Sprite]
-           | Computer Position Direction Paths [Sprite]
+data Actor = Player   Position Direction Direction Sprite.Sprites
+           | Computer Position Direction Paths Sprite.Sprites
 
  {-
    REPRESENTATION CONVENTION:
@@ -27,20 +29,14 @@ data Actor = Player   Position Direction Direction [Sprite]
  -}
 data Actors = Actors Actor [Actor]
 
-data Sprite = Sprite Picture Direction
-
-
--- Represents the score of a player.
-type Score = Int
-
 -- Paths of the AI
 type Paths = [(Int, Int)]
 
 -- First component is horizontal movement, second is vertical movement.
 type Direction = (Float, Float)
 
+-- The position of the actor
 type Position = (Float, Float)
-
 
 -------------------------------
 -- PLAYER ONLY FUNCTIONS
@@ -51,7 +47,7 @@ type Position = (Float, Float)
    POST:      A Player with position p, direction d, next direction n.
    EXAMPLES:  createPlayer ==
 -}
-createPlayer :: (Float, Float) -> Direction -> Direction -> [Sprite] -> Actor
+createPlayer :: (Float, Float) -> Direction -> Direction -> Sprite.Sprites -> Actor
 createPlayer p d n s = Player p d n s
 
 {- directions a
@@ -71,7 +67,7 @@ directions (Player _ a b _) = (a, b)
    POST:      An AI with the start position c.
    EXAMPLES:  createAI  ==
 -}
-createAI :: (Float, Float) -> Direction -> Paths -> [Sprite] -> Actor
+createAI :: (Float, Float) -> Direction -> Paths -> Sprite.Sprites -> Actor
 createAI position direction paths sprites = Computer position direction paths sprites
 
 {- paths c
@@ -127,7 +123,7 @@ isAI _ = False
    POST:      Sprites of a.
    EXAMPLES:  sprites ==
 -}
-sprites :: Actor -> [Sprite]
+sprites :: Actor -> Sprite.Sprites
 sprites (Player _ _ _ s)   = s
 sprites (Computer _ _ _ s) = s
 
@@ -136,12 +132,8 @@ sprites (Computer _ _ _ s) = s
    POST:      Image from a with associated with d.
    EXAMPLES:  getPicture  ==
 -}
-
--- getPicture (Player _ (0,0) d     s)      = pictureFromDirection s d
--- getPicture (Player _ d _ s)              = pictureFromDirection s d
-
 getPicture :: Actor -> Picture
-getPicture (Player _ (0,0) (0,0) ((Sprite s _):_)) = s
+getPicture (Player _ (0,0) (0,0) s) = pictureFromDirection s (1,0) -- default
 getPicture a = pictureFromDirection (sprites a) (direction a)
 
 {- pictureFromDirection s d
@@ -150,7 +142,7 @@ getPicture a = pictureFromDirection (sprites a) (direction a)
    EXAMPLES:  pictureFromDirection ==
    VARIANT:   |s|
 -}
-pictureFromDirection :: [Sprite] -> Direction -> Picture
-pictureFromDirection ((Sprite s x):xs) d
-  | length xs == 0 || d == x || d == (0,0) = s
+pictureFromDirection :: Sprite.Sprites -> Direction -> Picture
+pictureFromDirection ((Sprite.Sprite s x):xs) d
+  | length xs == 0 || d == x = s
   | otherwise = pictureFromDirection xs d
