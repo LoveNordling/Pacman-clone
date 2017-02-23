@@ -19,14 +19,7 @@ window = InWindow "DazzleBox" (1000, 1000) (0, 0)
 
 -- The background color of the window
 backgroundColor :: Color
-backgroundColor = white
-
-playerSprites :: [Actor.Sprite]
-playerSprites = Resources.loadSprites [ ((-1,0), "res/dazzleManLeft.png"), ((1,0), "res/dazzleManRight.png") ]
-
--- Initial state of the game
-state :: GameState.GameState
-state = GameState.newState (Level.setLevel 0) playerSprites 0
+backgroundColor = black
 
 {- main
    PRE:       True
@@ -34,4 +27,4 @@ state = GameState.newState (Level.setLevel 0) playerSprites 0
    EXAMPLES:  main ==
 -}
 main :: IO ()
-main = play window white GameEngine.fps state GraphicsEngine.render GameEngine.handleKeyEvents GameEngine.step
+main = play window backgroundColor GameEngine.fps GameState.initialState GraphicsEngine.render GameEngine.handleKeyEvents GameEngine.step

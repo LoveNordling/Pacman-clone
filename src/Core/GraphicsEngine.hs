@@ -41,6 +41,15 @@ mapDimensions b = fst $ bounds b
 -}
 render :: GameState.GameState -> Picture
 render (GameState.State l s (Actor.Actors p c) t) = drawMap (Level.getBoard l) s p c t
+render (GameState.Splash s _) = drawText s
+
+{- drawText s
+   PRE:       True
+   POST:      ...
+   EXAMPLES:  drawTexyt  ==
+-}
+drawText :: String -> Picture
+drawText s = (translate (-110) (-30) . color red) (Scale 0.3 0.3 (Text s))
 
 {- drawMap t p c
    PRE:           True
@@ -88,8 +97,8 @@ drawMap b s p cs time =
         -}
         drawInterior :: Board.Tiles -> Int -> [Picture] -> [Picture]
         drawInterior []             d acc = acc
-        drawInterior ((Tile.Floor p True):ts) d acc = drawInterior ts d ((makeRectangle p d red):(makeCircle p d yellow):acc)
-        drawInterior ((Tile.Floor p _):ts) d acc = drawInterior ts d ((makeRectangle p d red):acc)
+        drawInterior ((Tile.Floor p True):ts) d acc = drawInterior ts d ((makeRectangle p d (greyN 0.8)):(makeCircle p d yellow):acc)
+        drawInterior ((Tile.Floor p _):ts) d acc = drawInterior ts d ((makeRectangle p d (greyN 0.8)):acc)
         drawInterior ((Tile.Wall p):ts)  d acc = drawInterior ts d ((makeRectangle p d black):acc)
         {- makeRectangle p d c
            PRE:       p must be valid coordinates.

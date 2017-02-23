@@ -1,6 +1,9 @@
-module Core.Board.Level (Level, setLevel, getBoard, checkForTreasure, spawnPosition) where
+module Core.Board.Level
+        ( Level, setLevel, getBoard, getLevelGoal, checkForTreasure, spawnPosition, nextLevel )
+where
 
 import Data.Array
+
 import qualified Core.Board.Board as Board
 import qualified Core.Board.Actor as Actor
 import qualified Core.Board.Tile as Tile
@@ -9,6 +12,16 @@ import qualified Core.Board.Tile as Tile
 
 -- SSecond is AI position, third level number, fourth level goal
 data Level = Level Board.Board (Float, Float) Int Int deriving (Show)
+
+{- nextLevel arguments
+   PRE:           pre-condition on the arguments
+   POST:          post-condition on the result, in terms of the arguments
+   SIDE EFFECTS:  if any, including exceptions
+   EXAMPLES:      nextLevel ==
+   VARIANT:       None
+-}
+nextLevel :: Level -> Maybe (Level, (Float, Float))
+nextLevel (Level _ _ n _) = setLevel (n+1)
 
 {- setLevel i
    PRE:           i must exist=
@@ -47,12 +60,15 @@ setLevel i
         | otherwise = i
 
 {- getBoard b l s
-   PRE:           True
-   POST:          b
-   EXAMPLES:      getBoard ==
+   PRE:       True
+   POST:      b
+   EXAMPLES:  getBoard ==
 -}
 getBoard :: Level -> Board.Board
 getBoard (Level b _ _ _) = b
+
+getLevelGoal :: Level -> Int
+getLevelGoal (Level _ _ _ g) = g
 
 {- checkForTreasure l s p
    PRE:       p must be valid coordinates for the level.
@@ -75,11 +91,18 @@ checkForTreasure level@(Level board cp n g) p =
       foundTreasure :: Board.Board -> (Int, Int) -> Bool
       foundTreasure board position = Tile.hasTreasure (board ! position)
 
+{- spawnPosition l
+   PRE:       True.
+   POST:      Default spawn position for AIs.
+   EXAMPLES:  spawnPosition ==
+-}
 spawnPosition :: Level -> (Float, Float)
 spawnPosition (Level _ p _ _) = p
 
+-- TODO: NEED TO FIGURE OUT A BETTER WAY FOR ALL OF THIS SHIT
+-------------------------------------------
 -- LEVELS
-
+-------------------------------------------
 itemFloor = Tile.Floor (0,0) True
 baseFloor = Tile.Floor (0, 0) False
 baseWall  = Tile.Wall (0, 0)

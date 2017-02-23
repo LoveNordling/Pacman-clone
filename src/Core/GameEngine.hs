@@ -3,15 +3,14 @@ module Core.GameEngine (step, handleKeyEvents, fps) where
 import Data.Array
 import Graphics.Gloss.Interface.Pure.Game
 
-import Core.Board.GameState
-import Core.Board.Actor as Actor
+import qualified Core.Board.Actor as Actor
 import qualified Core.Board.Level as Level
-import Core.Board.Board
 import qualified Core.Board.Tile as Tile
+import qualified Core.Extras.Resources as Resources
+import Core.Board.GameState
+import Core.Board.Board
 import Core.Extras.Common
 import Core.AI
-
-import Debug.Trace
 
 -- The FPS of the game
 fps :: Int
@@ -47,6 +46,7 @@ actorSpeed speed fps = (speed / fps, speed / fps)
    EXAMPLES:  step 1 state gives a
 -}
 step :: Float -> GameState -> GameState
+step _ state@(Splash _ _) = state
 step _ state = moveActors (setMovement state)
 
 {- handleKeyEvents e g
@@ -56,6 +56,7 @@ step _ state = moveActors (setMovement state)
 -}
 handleKeyEvents :: Event -> GameState -> GameState
 handleKeyEvents (EventKey (SpecialKey k) Down _ _) (State b s (Actor.Actors p c) t) = State b s (Actor.Actors (changePlayerMovement p k) c) t
+handleKeyEvents (EventKey _ Down _ _) (Splash _ s) = s
 handleKeyEvents _ state = state
 
 {- changePlayerMovement s
@@ -63,7 +64,7 @@ handleKeyEvents _ state = state
    POST:      s with updated desired direction for player.
    EXAMPLES:  changePlayerMovement ==
 -}
-changePlayerMovement :: Actor -> SpecialKey -> Actor
+changePlayerMovement :: Actor.Actor -> SpecialKey -> Actor.Actor
 changePlayerMovement player k =
   let
     sprites  = Actor.sprites player
@@ -84,15 +85,17 @@ changePlayerMovement player k =
    EXAMPLES:  moveActors  ==
 -}
 moveActors :: GameState -> GameState
-moveActors (State l s (Actors player ai) t) =
-  let
-    newAI          = map (makeMove aiSpeed) ai
-    newPlayer      = makeMove playerSpeed player
-    (level, score) = case Level.checkForTreasure l (closestTile (position newPlayer)) of
-                      Just x  -> (x, s + 1)
+moveActors state@(State l s (Actor.Actors player ai) t)
+  | levelGoal > s = State level score (Actor.Actors newPlayer newAI) t
+  | otherwise     = Splash "Level done!" (nextState state)
+  where
+    levelGoal      = Level.getLevelGoal l
+    newAI          = map (Actor.makeMove aiSpeed) ai
+    newPlayer      = Actor.makeMove playerSpeed player
+    (level, score) = case Level.checkForTreasure l (closestTile (Actor.position newPlayer)) of
+                      Just l' -> (l', s + 1)
                       Nothing -> (l, s)
-  in
-    State level score (Actors newPlayer newAI) t
+moveActors state = state -- On game over!
 
 {- setMovement s
    PRE:       True
@@ -100,19 +103,21 @@ moveActors (State l s (Actors player ai) t) =
    EXAMPLES:  setMovement ==
 -}
 setMovement :: GameState -> GameState
-setMovement (State level s (Actors player ai) t) =
+setMovement (State level s (Actor.Actors player ai) t) =
   let
     board       = Level.getBoard level
     (newAI, t') = spawnAI level (t + timeStep) ai
   in
-    State level s (Actors (setPlayerMovement board player) (setAIMovements board player newAI)) t'
+    if newAI `caughtPlayer` player
+      then Splash "Game Over!" initialState
+      else State level s (Actor.Actors (setPlayerMovement board player) (setAIMovements board player newAI)) t'
   where
     {- spawnAI (State b s p cs t)
        PRE:
        POST:     The state with a new ghost if t > spawnTime and length cs < maxAI
        EXAMPLES:
     -}
-    spawnAI :: Level.Level -> Float -> [Actor] -> ([Actor], Float)
+    spawnAI :: Level.Level -> Float -> [Actor.Actor] -> ([Actor.Actor], Float)
     spawnAI level t cs =
       let
         coords = Level.spawnPosition level
@@ -121,14 +126,19 @@ setMovement (State level s (Actors player ai) t) =
         if t > spawnTime && length cs < maxAI
           then ((nextAI:cs), 0)
           else (cs, t)
+    caughtPlayer :: [Actor.Actor] -> Actor.Actor -> Bool
+    caughtPlayer []            _ = False
+    caughtPlayer (ai:ais) player = (hasReachedDestination aiSpeed (Actor.position ai) (round x, round y))
+      where
+        (x, y) = Actor.position player
 {- setAIMovements b p c
    PRE:           True
    POST:
    EXAMPLES:      setAIMovements  ==
 -}
-setAIMovements :: Board -> Actor -> [Actor] -> [Actor]
+setAIMovements :: Board -> Actor.Actor -> [Actor.Actor] -> [Actor.Actor]
 setAIMovements _ _ [] = []
-setAIMovements board p c = map (setAIMovement board (position p)) c
+setAIMovements board p c = map (setAIMovement board (Actor.position p)) c
   where
     {- setAIMovement b xy c
        PRE:           True
@@ -136,7 +146,7 @@ setAIMovements board p c = map (setAIMovement board (position p)) c
        EXAMPLES:      setAIMovement  ==
        VARIANT:       |c|
     -}
-    setAIMovement :: Board -> (Float, Float) -> Actor -> Actor
+    setAIMovement :: Board -> (Float, Float) -> Actor.Actor -> Actor.Actor
     setAIMovement board xy c
       | null paths     = Actor.createAI position direction (calculateAIMovement board xy position)
       | zero direction = changeAIDirection position [(closestTile position)] (calculateAIMovement board xy position)
@@ -168,7 +178,7 @@ setAIMovements board p c = map (setAIMovement board (position p)) c
            EXAMPLES:  changeAIDirection ==
         -}
         -- TODO: WRITE BETTER FUNCTION SPECIFICATION
-        changeAIDirection :: (Float, Float) -> [(Int, Int)] -> [(Int, Int)] -> Actor
+        changeAIDirection :: (Float, Float) -> [(Int, Int)] -> [(Int, Int)] -> Actor.Actor
         changeAIDirection position oldPath@((x, y):_) newPath@((x', y'):_) =
           let
             -- Calculates the next direction?
@@ -181,7 +191,7 @@ setAIMovements board p c = map (setAIMovement board (position p)) c
    POST:      ...
    EXAMPLES:  setPlayerMovement ==
 -}
-setPlayerMovement :: Board -> Actor -> Actor
+setPlayerMovement :: Board -> Actor.Actor -> Actor.Actor
 setPlayerMovement board player
   | zero direction && zero nextDirection = player
   | zero (direction + nextDirection)     = Actor.createPlayer position nextDirection nextDirection sprites -- fixes 180 movement delay bug.

@@ -1,5 +1,5 @@
 module Core.Extras.Resources
-        ( loadSprites )
+        ( loadSprites, playerSprites )
 where
 
 import Data.Maybe
@@ -14,6 +14,10 @@ dazzleManClosedRight = "res/dazzleManClosedRight.png"
 dazzleManClosedLeft = "res/dazzleManClosedLeft.png"
 dazzleManRight = "res/dazzleManRight.png"
 dazzleManLeft = "res/dazzleManLeft.png"
+
+-- The player sprites
+playerSprites :: [Actor.Sprite]
+playerSprites = loadSprites [ ((-1,0), dazzleManLeft), ((1,0), dazzleManRight) ]
 
 {- loadSprites s
    PRE:       ...
