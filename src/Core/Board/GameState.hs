@@ -21,11 +21,11 @@ data GameState = State Level.Level Score Actor.Actors Float
 -- Represents the score of the player
 type Score = Int
 
-newState :: Maybe (Level.Level, Actor.Position) -> Score -> GameState
-newState Nothing score = Splash ("Game over. High score: " ++ show (score))
-newState (Just (level, position)) score =
+newState :: Maybe (Level.Level, Actor.Position) -> [Actor.Sprite] -> Score -> GameState
+newState Nothing _ score = Splash ("Game over. High score: " ++ show (score))
+newState (Just (level, position)) sprites score =
   let
-    player = Actor.createPlayer position (0,0) (0,0)
+    player = Actor.createPlayer position (0,0) (0,0) sprites
     actors = (Actor.Actors player [])
   in
     State level score actors 0

@@ -74,11 +74,12 @@ drawMap b s p cs time =
         drawActor :: Int -> Float -> Actor.Actor -> Picture
         drawActor d time a
           | Actor.isAI a = translateAndColor p d green (circle $ fromIntegral d / 2)
-          | otherwise    = translateAndColor p d blue (Scale 0.1 0.1 (Resources.getSprite n (mod t 2 == 0)))
+          | otherwise    = translateAndColor p d blue (Scale 0.1 0.1 s)
           where
             p = Actor.position a
             n = Actor.direction a
             t = round time
+            s = Actor.getPicture a
         {- drawInterior t f acc
            PRE:       True
            POST:      The interiors in t to be displayed.
