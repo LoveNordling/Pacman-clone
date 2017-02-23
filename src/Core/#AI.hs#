@@ -68,7 +68,7 @@ cost goal path = let
 
 
 {- newPaths board path
-   PRE:     ...
+   PRE:     
    POST:    list of all valid neighbours of the last element in path each appended to path
    EXAMPLES: ...
 -}
