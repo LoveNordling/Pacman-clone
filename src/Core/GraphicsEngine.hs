@@ -40,13 +40,13 @@ mapDimensions b = fst $ bounds b
    EXAMPLES:  render  ==
 -}
 render :: GameState.GameState -> Picture
-render (GameState.State l s (Actor.Actors p c) t) = drawMap (Level.getBoard l) s p c t
+render (GameState.State l _ (Actor.Actors p c) t) = drawMap (Level.getBoard l) p c t
 render (GameState.Splash s _) = drawText s
 
 {- drawText s
    PRE:       True
    POST:      ...
-   EXAMPLES:  drawTexyt  ==
+   EXAMPLES:  drawText  ==
 -}
 drawText :: String -> Picture
 drawText s = (translate (-110) (-30) . color red) (Scale 0.3 0.3 (Text s))
@@ -56,34 +56,26 @@ drawText s = (translate (-110) (-30) . color red) (Scale 0.3 0.3 (Text s))
    POST:          The image to be displayed, based on t with entities p and c.
    EXAMPLES:      drawMap ==
 -}
-drawMap :: Board.Board -> Int -> Actor.Actor -> [Actor.Actor] -> Float -> Picture
-drawMap b s p cs time =
+drawMap :: Board.Board -> Actor.Actor -> [Actor.Actor] -> Float -> Picture
+drawMap b p cs time =
   let
     board      = elems b
     dimensions = tileSize b
     interior   = drawInterior board dimensions []
     character  = [drawActor dimensions time p]
     computer   = map (drawActor dimensions time) cs
-    scoreboard = [drawScoreboard dimensions s]
   in
-    Pictures (interior ++ character ++ computer ++ scoreboard)
+    Pictures (interior ++ character ++ computer)
       where
-        {- drawScoreboard s
-           PRE:       True
-           POST:      ...
-           EXAMPLES:  drawScoreboard  ==
-        -}
-        drawScoreboard :: Int -> Int -> Picture
-        drawScoreboard d s = translateAndColor (-9 :: Float, -4 :: Float) d red (Scale 0.3 0.3 (Text ("Score: " ++ (show s))))
         {- drawActor a f
            PRE:       True
            POST:      The actors a to be displayed.
            EXAMPLES:  drawActor ==
         -}
         drawActor :: Int -> Float -> Actor.Actor -> Picture
-        drawActor d time a
-          | Actor.isAI a = translateAndColor p d green (circle $ fromIntegral d / 2)
-          | otherwise    = translateAndColor p d blue (Scale 0.1 0.1 s)
+        drawActor d time a = translateAndColor p d green (Scale 0.1 0.1 s)
+          -- | Actor.isAI a = translateAndColor p d green (Scale 0.1 0.1 s)
+          -- | otherwise    = translateAndColor p d blue (Scale 0.1 0.1 s)
           where
             p = Actor.position a
             n = Actor.direction a

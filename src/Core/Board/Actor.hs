@@ -16,7 +16,7 @@ import Graphics.Gloss
     The coordinates of the player and computer must not be out of bounds compared to the maps they are occupying. The components of the direction of the player and computer must be between -1 and 1.
 -}
 data Actor = Player   Position Direction Direction [Sprite]
-           | Computer Position Direction Paths
+           | Computer Position Direction Paths [Sprite]
 
  {-
    REPRESENTATION CONVENTION:
@@ -62,35 +62,6 @@ createPlayer p d n s = Player p d n s
 directions :: Actor -> (Direction, Direction)
 directions (Player _ a b _) = (a, b)
 
-{- sprites a
-   PRE:       True
-   POST:      Sprites of a.
-   EXAMPLES:  sprites ==
--}
-sprites :: Actor -> [Sprite]
-sprites (Player _ _ _ s) = s
-
-{- getPicture a d
-   PRE:       a must have at least one sprite.
-   POST:      Image from a with associated with d.
-   EXAMPLES:  getPicture  ==
--}
-getPicture :: Actor -> Picture
-getPicture (Player _ (0,0) (0,0) ((Sprite s _):xs)) = s
-getPicture (Player _ (0,0) d     s)      = pictureFromDirection s d
-getPicture (Player _ d _ s)              = pictureFromDirection s d
-
-{- pictureFromDirection s d
-   PRE:       True
-   POST:      Element in s associated with d.
-   EXAMPLES:  pictureFromDirection ==
-   VARIANT:   |s|
--}
-pictureFromDirection :: [Sprite] -> Direction -> Picture
-pictureFromDirection ((Sprite s x):xs) d
-  | length xs == 0 || d == x = s
-  | otherwise = pictureFromDirection xs d
-
 -------------------------------
 -- AI ONLY FUNCTIONS
 -------------------------------
@@ -100,8 +71,8 @@ pictureFromDirection ((Sprite s x):xs) d
    POST:      An AI with the start position c.
    EXAMPLES:  createAI  ==
 -}
-createAI :: (Float, Float) -> Direction -> Paths -> Actor
-createAI p d ps = Computer p d ps
+createAI :: (Float, Float) -> Direction -> Paths -> [Sprite] -> Actor
+createAI position direction paths sprites = Computer position direction paths sprites
 
 {- paths c
    PRE:       c must be computer
@@ -109,7 +80,7 @@ createAI p d ps = Computer p d ps
    EXAMPLES:  paths ==
 -}
 paths :: Actor -> Paths
-paths (Computer _ _ p) = p
+paths (Computer _ _ p _) = p
 
 -------------------------------
 -- COMMON FUNCTIONS
@@ -122,7 +93,7 @@ paths (Computer _ _ p) = p
 -}
 position :: Actor -> (Float, Float)
 position (Player   a _ _ _) = a
-position (Computer a _ _)   = a
+position (Computer a _ _ _) = a
 
 {- direction a
    PRE:       True
@@ -131,7 +102,7 @@ position (Computer a _ _)   = a
 -}
 direction :: Actor -> Direction
 direction (Player   _ a _ _) = a
-direction (Computer _ a _)   = a
+direction (Computer _ a _ _) = a
 
 {- makeMove s a
    PRE:       True
@@ -139,8 +110,8 @@ direction (Computer _ a _)   = a
    EXAMPLES:  makeMove ==
 -}
 makeMove :: (Float, Float) -> Actor -> Actor
-makeMove speed (Player   position direction n s) = Player (position + direction * speed) direction n s
-makeMove speed (Computer position direction n)   = Computer (position + direction * speed) direction n
+makeMove speed (Player   position direction n s) = Player   (position + direction * speed) direction n s
+makeMove speed (Computer position direction n s) = Computer (position + direction * speed) direction n s
 
 {- isAI a
    PRE:       True
@@ -148,5 +119,38 @@ makeMove speed (Computer position direction n)   = Computer (position + directio
    EXAMPLES:  isAI  ==
 -}
 isAI :: Actor -> Bool
-isAI (Computer _ _ _) = True
+isAI (Computer _ _ _ _) = True
 isAI _ = False
+
+{- sprites a
+   PRE:       True
+   POST:      Sprites of a.
+   EXAMPLES:  sprites ==
+-}
+sprites :: Actor -> [Sprite]
+sprites (Player _ _ _ s)   = s
+sprites (Computer _ _ _ s) = s
+
+{- getPicture a d
+   PRE:       a must have at least one sprite.
+   POST:      Image from a with associated with d.
+   EXAMPLES:  getPicture  ==
+-}
+
+-- getPicture (Player _ (0,0) d     s)      = pictureFromDirection s d
+-- getPicture (Player _ d _ s)              = pictureFromDirection s d
+
+getPicture :: Actor -> Picture
+getPicture (Player _ (0,0) (0,0) ((Sprite s _):_)) = s
+getPicture a = pictureFromDirection (sprites a) (direction a)
+
+{- pictureFromDirection s d
+   PRE:       s must be non-empty.
+   POST:      Element in s associated with d.
+   EXAMPLES:  pictureFromDirection ==
+   VARIANT:   |s|
+-}
+pictureFromDirection :: [Sprite] -> Direction -> Picture
+pictureFromDirection ((Sprite s x):xs) d
+  | length xs == 0 || d == x || d == (0,0) = s
+  | otherwise = pictureFromDirection xs d

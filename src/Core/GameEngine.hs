@@ -136,7 +136,7 @@ setMovement (State level s (Actor.Actors player ai) t) =
     spawnAI level t cs =
       let
         coords = Level.spawnPosition level
-        nextAI = Actor.createAI coords (0,0) []
+        nextAI = Actor.createAI coords (0,0) [] Resources.aiSprites
       in
         if t > spawnTime && length cs < maxAI
           then ((nextAI:cs), 0)
@@ -159,16 +159,17 @@ setAIMovements board p c = map (setAIMovement board (Actor.position p)) c
     -}
     setAIMovement :: Board -> (Float, Float) -> Actor.Actor -> Actor.Actor
     setAIMovement board xy c
-      | null paths     = Actor.createAI position direction (calculateAIMovement board xy position)
-      | zero direction = changeAIDirection position [(closestTile position)] (calculateAIMovement board xy position)
+      | null paths = Actor.createAI position direction (calculateAIMovement board xy position) sprites
+      | zero direction = changeAIDirection position [(closestTile position)] (calculateAIMovement board xy position) sprites
       | otherwise =
         if (hasReachedDestination aiSpeed position (head paths))
-          then changeAIDirection position paths (calculateAIMovement board xy position)
-          else Actor.createAI position direction paths
+          then changeAIDirection position paths (calculateAIMovement board xy position) sprites
+          else Actor.createAI position direction paths sprites
       where
         position  = Actor.position c
         direction = Actor.direction c
         paths     = Actor.paths c
+        sprites   = Actor.sprites c
         {- calculateAIMovement b d s
            PRE:       True
            POST:      Shortest path in b from s to d
@@ -189,13 +190,13 @@ setAIMovements board p c = map (setAIMovement board (Actor.position p)) c
            EXAMPLES:  changeAIDirection ==
         -}
         -- TODO: WRITE BETTER FUNCTION SPECIFICATION
-        changeAIDirection :: (Float, Float) -> [(Int, Int)] -> [(Int, Int)] -> Actor.Actor
-        changeAIDirection position oldPath@((x, y):_) newPath@((x', y'):_) =
+        changeAIDirection :: (Float, Float) -> [(Int, Int)] -> [(Int, Int)] -> [Actor.Sprite] -> Actor.Actor
+        changeAIDirection position oldPath@((x, y):_) newPath@((x', y'):_) sprites =
           let
             -- Calculates the next direction?
             direction = (fromIntegral x', fromIntegral y') - (fromIntegral x, fromIntegral y)
           in
-            Actor.createAI position direction newPath
+            Actor.createAI position direction newPath sprites
 
 {- setPlayerMovement arguments
    PRE:       True?
