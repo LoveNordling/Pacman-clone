@@ -13,26 +13,29 @@ import qualified Core.Board.Level as L
 -}
 validCoordinates :: (Int, Int) -> [(Int, Int)]
 validCoordinates (x, y) =
-  [ (a, b) | a <- [(x-1)..(x+1)], b <- [(y-1)..(y+1)], satisifies (x, y) (a, b) ]
+  [ (a, b) | a <- [(x-1)..(x+1)], b <- [(y-1)..(y+1)], satisfies (x, y) (a, b) ]
   where
     {- satisifies (a,b) (c,d)
        PRE:       True
-       POST:      True if and only if c-a == 0 or d-b == 0, while also c =0 a and d == b, otherwise False.
-       EXAMPLES:  ...
+       POST:      True if and only if either a==c or b==d but not both, otherwise False.
+       EXAMPLES:  satisfies (1,2) (3,4) = False
+                  satisfies (1,2) (1,3) = True
+                  satisfies (1,2) (1,2) = False
     -}
-    satisifies :: (Int, Int) -> (Int, Int) -> Bool
-    satisifies (a, b) (c, d) =
+    satisfies :: (Int, Int) -> (Int, Int) -> Bool
+    satisfies (a, b) (c, d) =
       not ((c == a && d == b)) &&(c-a == 0 || d-b == 0)
 
 adjacentFloors :: (Int, Int) -> Board -> [(Int, Int)]
 adjacentFloors position board = filter (isValidMove board) $ validCoordinates position
   where
     {- isValidMove board pos
-       PRE:
-       POST: True if and only if pos is on board and is not a wall
+       PRE:          pos are valid coordinates on board
+       POST:         True if and only if pos is on board and is not a wall
        SIDE EFFECTS: none
-       VARIANT: length of board
-       EXAMPLES:
+       VARIANT:      length of board
+       EXAMPLES:     isValidMove (Core.Board.Board.getBoard $ Core.Board.Board.setLevel 0) (1,1) = True
+                     isValidMove (Core.Board.Board.getBoard $ Core.Board.Board.setLevel 0) (0,0) = False
     -}
     isValidMove :: Board -> (Int, Int) -> Bool
     isValidMove b p = case (board ! p) of
@@ -40,20 +43,23 @@ adjacentFloors position board = filter (isValidMove board) $ validCoordinates po
                         _        -> True
 
 {- distance pos1 pos2
-   PRE:       ...
-   POST:      the manhattan distance between pos1 and pos2
-   EXAMPLES:  ...
+   PRE:          True
+   POST:         the manhattan distance between pos1 and pos2
+   SIDE EFFECTS: none
+   EXAMPLES:     distance (1,2) (2,3)  = 2
+                 distance (-1,4) (0,0) = 5
 -}
 distance :: (Int, Int) -> (Int, Int) -> Int
 distance (x0, y0) (x1, y1) = abs (x1-x0) + abs (y1-y0)
 
 {- cost goal path
-   PRE:
+   PRE: path is not empty
    POST: the total estimated cost for path to reach goal
    SIDE EFFECTS: none
    EXAMPLES.
 -}
 cost :: (Int, Int) -> [(Int, Int)] -> Int
+cost goal []      = -1
 cost goal path = let
                    current = last path
                    steps   = length path - 1
@@ -174,6 +180,12 @@ test10 = let
           TestCase $ assertEqual "cost"
           ((length current -1) +distance (last current) goal) (cost goal current)
 
+test17 = let
+           current = []
+           goal = (1,1)
+         in
+           TestCase $ assertEqual "cost"
+           (-1) (cost goal current)
 -- newpaths
 
 test11 = let
@@ -204,8 +216,18 @@ test13 = let
          in
           TestCase $ assertEqual "newPaths"
           ([(2,1),(3,1),(4,1),(4,2),(4,3)]) (aStar board goal start)
+          
+-- satisfies
+test14 =  TestCase $ assertEqual "satisfies"
+          (False) (satisfies (1,2) (2,3)) where satisfies (a, b) (c, d) = not ((c == a && d == b)) &&(c-a == 0 || d-b == 0)
 
+test15 =  TestCase $ assertEqual "satisfies"
+          (True) (satisfies (1,1) (1,3)) where satisfies (a, b) (c, d) = not ((c == a && d == b)) &&(c-a == 0 || d-b == 0)
 
+test16 =  TestCase $ assertEqual "satisfies"
+          (False) (satisfies (1,0) (0,1)) where satisfies (a, b) (c, d) = not ((c == a && d == b)) &&(c-a == 0 || d-b == 0)
+
+-- aStarAux
 
 testList = do
-  runTestTT $ TestList [test1, test2, test3, test4, test5, test6, test7, test8, test9, test10, test11, test12]
+  runTestTT $ TestList [test1, test2, test3, test4, test5, test6, test7, test8, test9, test10, test11, test12, test13, test14, test15, test16, test17]
