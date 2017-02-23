@@ -88,8 +88,8 @@ u = itemFloor
 x = baseWall
 o = baseFloor
 
-coords = [ ((1.0, 1.0), (10.0, 11.0)) ]
-levels = [ level1 ]
+coords = [ ((1.0, 1.0), (8.0, 8.0)), ((1.0, 1.0), (10.0, 11.0)) ]
+levels = [ hardcodedMap1, level1 ]
 
 level1 = [
   [x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x],

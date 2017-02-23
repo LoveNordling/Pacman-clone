@@ -47,24 +47,7 @@ actorSpeed speed fps = (speed / fps, speed / fps)
    EXAMPLES:  step 1 state gives a
 -}
 step :: Float -> GameState -> GameState
-step _ state = spawnAI (moveActors (setMovement state))
-
-
-{- spawnAI (State b s p cs t)
-   PRE:
-   POST:     The state with a new ghost if t > spawnTime and length cs < maxAI
-   EXAMPLES:
--}
-spawnAI :: GameState -> GameState
-spawnAI (State level s (Actor.Actors p cs) t) =
-  let
-    t' = t + timeStep
-    coords = Level.spawnPosition level
-    nextAI = Actor.createAI coords (0,0) []
-  in
-    if t' > spawnTime && length cs < maxAI
-      then State level s (Actor.Actors p (nextAI:cs)) 0
-      else State level s (Actor.Actors p cs) t'
+step _ state = moveActors (setMovement state)
 
 {- handleKeyEvents e g
    PRE:       True
@@ -118,10 +101,25 @@ moveActors (State l s (Actors player ai) t) =
 setMovement :: GameState -> GameState
 setMovement (State level s (Actors player ai) t) =
   let
-    board = Level.getBoard level
+    board       = Level.getBoard level
+    (newAI, t') = spawnAI level (t + timeStep) ai
   in
-    State level s (Actors (setPlayerMovement board player) (setAIMovements board player ai)) t
-
+    State level s (Actors (setPlayerMovement board player) (setAIMovements board player newAI)) t'
+  where
+    {- spawnAI (State b s p cs t)
+       PRE:
+       POST:     The state with a new ghost if t > spawnTime and length cs < maxAI
+       EXAMPLES:
+    -}
+    spawnAI :: Level.Level -> Float -> [Actor] -> ([Actor], Float)
+    spawnAI level t cs =
+      let
+        coords = Level.spawnPosition level
+        nextAI = Actor.createAI coords (0,0) []
+      in
+        if t > spawnTime && length cs < maxAI
+          then ((nextAI:cs), 0)
+          else (cs, t)
 {- setAIMovements b p c
    PRE:           True
    POST:

@@ -4,14 +4,14 @@ import Data.Array
 import Graphics.Gloss
 import Graphics.Gloss.Juicy
 import Graphics.Gloss.Interface.Pure.Game
-import System.IO.Unsafe (unsafePerformIO)
 
-import Core.Extras.Common
 import qualified Core.Board.GameState as GameState
 import qualified Core.Board.Actor as Actor
 import qualified Core.Board.Board as Board
 import qualified Core.Board.Level as Level
 import qualified Core.Board.Tile as Tile
+import qualified Core.Extras.Common as Common
+import qualified Core.Extras.Resources as Resources
 
 {-# ANN module "HLint: Ignore Use mappend" #-}
 
@@ -23,8 +23,16 @@ mapSize = 1000
    POST:          the width and height of a tile based on n.
    EXAMPLES:      tileSize  ==
 -}
-tileSize :: Int -> Int
-tileSize n = round (10 * sqrt ( fromIntegral (mapSize) / fromIntegral (n) ))
+tileSize :: Board.Board -> Int
+tileSize b = round (10 * sqrt ( fromIntegral (mapSize) / fromIntegral (length b) ))
+
+{- mapDimensions b
+   PRE:       True.
+   POST:      Dimensions of b.
+   EXAMPLES:  mapDimensions ==
+-}
+mapDimensions :: Board.Board -> (Int, Int)
+mapDimensions b = fst $ bounds b
 
 {- render s
    PRE:       True
@@ -32,24 +40,24 @@ tileSize n = round (10 * sqrt ( fromIntegral (mapSize) / fromIntegral (n) ))
    EXAMPLES:  render  ==
 -}
 render :: GameState.GameState -> Picture
-render (GameState.State l s (Actor.Actors p c) _) = drawMap (Level.getBoard l) s p c
+render (GameState.State l s (Actor.Actors p c) t) = drawMap (Level.getBoard l) s p c t
 
 {- drawMap t p c
    PRE:           True
    POST:          The image to be displayed, based on t with entities p and c.
    EXAMPLES:      drawMap ==
 -}
-drawMap :: Board.Board -> Int -> Actor.Actor -> [Actor.Actor] -> Picture
-drawMap b s p cs =
+drawMap :: Board.Board -> Int -> Actor.Actor -> [Actor.Actor] -> Float -> Picture
+drawMap b s p cs time =
   let
     board      = elems b
-    dimensions = tileSize (length board)
+    dimensions = tileSize b
     interior   = drawInterior board dimensions []
-    character  = [drawActor dimensions p]
-    computer   = map (drawActor dimensions) cs --drawComputers cs
-    scoreboard = drawScoreboard s dimensions
+    character  = [drawActor dimensions time p]
+    computer   = map (drawActor dimensions time) cs
+    scoreboard = [drawScoreboard dimensions s]
   in
-    Pictures (interior ++ character ++ computer ++ [scoreboard])
+    Pictures (interior ++ character ++ computer ++ scoreboard)
       where
         {- drawScoreboard s
            PRE:       True
@@ -57,18 +65,20 @@ drawMap b s p cs =
            EXAMPLES:  drawScoreboard  ==
         -}
         drawScoreboard :: Int -> Int -> Picture
-        drawScoreboard s d = translateAndColor (-500 :: Float, 500 :: Float) d black (Text ("Score: " ++ (show s)))
+        drawScoreboard d s = translateAndColor (-9 :: Float, -4 :: Float) d red (Scale 0.3 0.3 (Text ("Score: " ++ (show s))))
         {- drawActor a f
            PRE:       True
            POST:      The actors a to be displayed.
            EXAMPLES:  drawActor ==
         -}
-        drawActor :: Int -> Actor.Actor -> Picture
-        drawActor d a
+        drawActor :: Int -> Float -> Actor.Actor -> Picture
+        drawActor d time a
           | Actor.isAI a = translateAndColor p d green (circle $ fromIntegral d / 2)
-          | otherwise    = translateAndColor p d blue (Scale 0.1 0.1 (loadImage "res/dazzleManRight.png"))
+          | otherwise    = translateAndColor p d blue (Scale 0.1 0.1 (Resources.getSprite n (mod t 2 == 0)))
           where
             p = Actor.position a
+            n = Actor.direction a
+            t = round time
         {- drawInterior t f acc
            PRE:       True
            POST:      The interiors in t to be displayed.
@@ -99,14 +109,5 @@ drawMap b s p cs =
            POST:      Shape s positioned based on p and d with color c.
            EXAMPLES:  translateAndColor ==
         -}
-        translateAndColor :: (Position a) => (a, a) -> Int -> Color -> Picture -> Picture
-        translateAndColor p d c = (setCoordinate p $ fromIntegral d) . color c
-
--- Borrowed from Gloss.Game
-{- loadImage p
-   PRE:       p must be a valid path to a PNG image.
-   POST:      File at path p loaded as a picture.
-   EXAMPLES:  loadImage ==
--}
-loadImage :: String -> Picture
-loadImage path = maybe (text "Could not load image.") id (unsafePerformIO $ loadJuicyPNG path)
+        translateAndColor :: (Common.Position a) => (a, a) -> Int -> Color -> Picture -> Picture
+        translateAndColor p d c = (Common.setCoordinate p $ fromIntegral d) . color c
