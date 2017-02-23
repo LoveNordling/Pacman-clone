@@ -1,11 +1,13 @@
-module Core.AI (aStar, testList) where
+module Core.AI (aStar, testSuite) where
+
 import Data.List
 import Data.Array
+import Test.HUnit
+
 import Core.Board.Tile
 import Core.Board.Board
-import Debug.Trace
-import Test.HUnit
 import qualified Core.Board.Level as L
+
 {- validCoordinates arguments
    PRE:       True
    POST:      All coordinates that are adjacent to p.
@@ -24,6 +26,7 @@ validCoordinates (x, y) =
     satisifies (a, b) (c, d) =
       not ((c == a && d == b)) &&(c-a == 0 || d-b == 0)
 
+-- TODO: ADD SPECIFICATION
 adjacentFloors :: (Int, Int) -> Board -> [(Int, Int)]
 adjacentFloors position board = filter (isValidMove board) $ validCoordinates position
   where
@@ -111,23 +114,23 @@ aStar board goal start = aStarAux board goal [[start]] where
             in
               aStarAux board goal $ filter (/= best) paths ++ next
 
---TESTCASES
-
+-------------------------------------------
+-- TEST SUITE
+-------------------------------------------
+test1, test2, test3, test4, test5, test6, test7, test8, test9, test10, test11, test12 :: Test
+testSuite = TestList [ test1, test2, test3, test4, test5, test6, test7, test8, test9, test10, test11, test12]
 -- validCoordinates
 test1 = [(-1,0), (0,-1),(0,1), (1,0)] ~=? (validCoordinates (0,0))
-
 test2 = [(-2,-1), (-1,-2),(-1,0), (0,-1)] ~=? (validCoordinates (-1,-1))
-
 test3 = [(0,2), (1,1),(1,3), (2,2)] ~=? (validCoordinates (1,2))
-
 -- adjacentFloors
 test4 = let
           (Just(l,x)) = L.setLevel 0
           board = L.getBoard l
           current = (4,2)
         in
-          TestCase $ assertEqual "adjacentFloors"
-          [(4,1),(4,3),(5,2)] (adjacentFloors current board) 
+          TestLabel "Adjacent floors" $ TestCase $ assertEqual "adjacentFloors"
+          [(4,1),(4,3),(5,2)] (adjacentFloors current board)
 
 test5 = let
           (Just(l,x)) = L.setLevel 0
@@ -135,29 +138,13 @@ test5 = let
           current = (1,1)
         in
           TestCase $ assertEqual "adjacentFloors"
-          [(1,2),(2,1)] (adjacentFloors current board) 
+          [(1,2),(2,1)] (adjacentFloors current board)
 
 -- distance
-test6 = let
-          current = (0,0)
-          goal    = (3,4)
-        in
-          TestCase $ assertEqual "distance"
-          (7) (distance current goal) 
+test6 = TestCase $ assertEqual "distance" (7) (distance (0,0) (3,4))
+test7 = TestCase $ assertEqual "distance" (0) (distance (0,0) (0,0))
 
-test7 = let
-          current = (0,0)
-          goal    = (0,0)
-        in
-          TestCase $ assertEqual "distance"
-          (0) (distance current goal)
-
-test8 = let
-          current = (1,1)
-          goal    = (0,0)
-        in
-          TestCase $ assertEqual "distance"
-          (2) (distance current goal)
+test8 = TestCase $ assertEqual "distance" (2) (distance (1,1) (0,0))
 
 -- cost
 test9 = let
@@ -165,7 +152,7 @@ test9 = let
           goal    = (1,3)
         in
           TestCase $ assertEqual "cost"
-          ((length current -1) +distance (last current) goal) (cost goal current)
+          ((length current - 1) +distance (last current) goal) (cost goal current)
 
 test10 = let
           current = [(1,1)]
@@ -204,8 +191,3 @@ test13 = let
          in
           TestCase $ assertEqual "newPaths"
           ([(2,1),(3,1),(4,1),(4,2),(4,3)]) (aStar board goal start)
-
-
-
-testList = do
-  runTestTT $ TestList [test1, test2, test3, test4, test5, test6, test7, test8, test9, test10, test11, test12]

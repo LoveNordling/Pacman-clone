@@ -1,5 +1,8 @@
-module Core.GraphicsEngine (render) where
+module Core.GraphicsEngine
+        ( render, testSuite )
+where
 
+import Test.HUnit
 import Data.Array
 import Graphics.Gloss
 import Graphics.Gloss.Juicy
@@ -113,3 +116,36 @@ drawMap b p cs time =
         translateAndColor :: (Common.Position a) => (a, a) -> Int -> Color -> Picture -> Picture
         translateAndColor p d c = Common.setCoordinate p (fromIntegral d) rowLength . (color c)
           where rowLength = fromIntegral (round (sqrt (fromIntegral (length b))))
+
+
+-------------------------------------------
+-- TEST CASES
+-------------------------------------------
+test1, test2, test3, test4 :: Test
+testSuite = TestList [  test1, test2, test3, test4 ]
+-- Tile size
+test1 = TestLabel "Tile size #1" $ TestCase $ assertEqual "" (minBound) (tileSize (Board.createBoard [[]]))
+test2 = TestLabel "Tile size #2" $ TestCase $ assertEqual "" (result) (tileSize board)
+    where
+        level = Resources.levels !! 0
+        board = Board.createBoard level
+        result = 19 * round (sqrt (fromIntegral (mapSize) / fromIntegral (length board)))
+-- Draw Map
+-- a map with 16 walls/floors and 2 entities
+test3 =
+    let
+        b = Board.createBoard [ [Tile.Wall (0,0), Tile.Wall (0,0), Tile.Wall (0,0), Tile.Wall (0,0)], [Tile.Wall (0,0), Tile.Floor (0,0) False, Tile.Floor (0,0) False, Tile.Wall (0,0)], [Tile.Wall (0,0), Tile.Floor (0,0) False, Tile.Floor (0,0) False, Tile.Wall (0,0)], [Tile.Wall (0,0), Tile.Wall (0,0), Tile.Wall (0,0), Tile.Wall (0,0)]]
+        p = Actor.createPlayer (0,0) (0,0) (0,0) []
+        c = [Actor.createAI (0,0) (0,0) [] []]
+        (Pictures pics) = (drawMap b p c 0)
+    in
+        TestLabel "Draw map #1" $ TestCase $ assertEqual "" (18) (length pics)
+-- a map with just 2 entities
+test4 =
+    let
+        b = Board.createBoard [[]]
+        p = Actor.createPlayer (0,0) (0,0) (0,0) []
+        c = [Actor.createAI (0,0) (0,0) [] []]
+        (Pictures pics) = (drawMap b p c 0)
+    in
+        TestLabel "Draw map #2" $ TestCase $ assertEqual "" (2) (length pics)

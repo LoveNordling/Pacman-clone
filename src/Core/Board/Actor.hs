@@ -146,3 +146,8 @@ pictureFromDirection :: Sprite.Sprites -> Direction -> Picture
 pictureFromDirection ((Sprite.Sprite s x):xs) d
   | length xs == 0 || d == x = s
   | otherwise = pictureFromDirection xs d
+
+
+-------------------------------------------
+-- TEST CASES
+-------------------------------------------

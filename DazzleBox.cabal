@@ -19,13 +19,13 @@ executable DazzleBox
   main-is:             Main.hs
   -- other-modules:
   -- other-extensions:
-  build-depends:       base >=4.8 && <4.10, gloss==1.10.*, array, gloss-juicy, hspec >=2.4.1, HUnit
+  build-depends:       base >=4.8 && <4.10, gloss==1.10.*, array, gloss-juicy, HUnit
   hs-source-dirs:      src
   default-language:    Haskell2010
 
 Test-Suite Test
   type:                exitcode-stdio-1.0
   main-is:             Main.hs
-  build-depends:       base >=4.8 && <4.10, gloss==1.10.*, array, gloss-juicy, hspec >=2.4.1, HUnit
+  build-depends:       base >=4.8 && <4.10, gloss==1.10.*, array, gloss-juicy, hspec >=2.4.1, hspec-contrib, HUnit
   hs-source-dirs:      Test, src
   default-language:    Haskell2010
