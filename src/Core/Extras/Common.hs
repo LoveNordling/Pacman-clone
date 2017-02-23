@@ -3,17 +3,16 @@ module Core.Extras.Common
 where
 
 import Graphics.Gloss
-
 --  Position class is used for Int and Float
 --  TODO: Write a description here...
 --
 class (Num a) => Position a where
-  {- setCoordinate c d p
+  {- setCoordinate c d t p
      PRE:       True
-     POST:      p with new coordinates based on c and d.
+     POST:      p with new coordinates based on c and d t.
      EXAMPLES:  setCoordinate  ==
   -}
-  setCoordinate :: (a, a) -> Int -> Picture -> Picture
+  setCoordinate :: (a, a) -> Int -> Float-> Picture -> Picture
   {- zero p
      PRE:       True
      POST:      True if p is (0, 0), otherwise False.
@@ -23,19 +22,19 @@ class (Num a) => Position a where
 
 instance Position Int where
   zero p = p == (0,0)
-  setCoordinate (x, y) d p =
+  setCoordinate (x, y) d t p  =
     let
-      newX = fromIntegral (x * d) - (fromIntegral d/2) - (10* fromIntegral d) / 2
-      newY = fromIntegral (y * d) - (fromIntegral d/2) - (10* fromIntegral d) / 2
+      newY = fromIntegral (y * d) - (fromIntegral d/2) - (t* fromIntegral d) / 2
+      newX = fromIntegral (x * d) - (fromIntegral d/2) - (t* fromIntegral d) / 2
     in
       translate newX newY p
 
 instance Position Float where
   zero p = p == (0,0)
-  setCoordinate (x, y) d p =
+  setCoordinate (x, y) d t p =
     let
-      newX =  (x * (fromIntegral d)) - ( fromIntegral d / 2) - (10* fromIntegral d) / 2
-      newY =  (y * (fromIntegral d)) - ( fromIntegral d / 2) - (10* fromIntegral d) / 2
+      newX =  (x * (fromIntegral d)) - ( fromIntegral d / 2) - (t * fromIntegral d) / 2
+      newY =  (y * (fromIntegral d)) - ( fromIntegral d / 2) - (t * fromIntegral d) / 2
     in
       translate newX newY p
 

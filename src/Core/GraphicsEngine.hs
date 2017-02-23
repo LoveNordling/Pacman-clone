@@ -24,8 +24,8 @@ mapSize = 1000
    EXAMPLES:      tileSize  ==
 -}
 tileSize :: Board.Board -> Int
-tileSize b = round (10 * sqrt ( fromIntegral (mapSize) / fromIntegral (length b) ))
-
+--tileSize b = 40         --TODO Change definitions of tileSize to constant
+tileSize b = 19*round (sqrt ( fromIntegral (mapSize) / fromIntegral (length b) ))
 {- mapDimensions b
    PRE:       True.
    POST:      Dimensions of b.
@@ -110,7 +110,6 @@ drawMap b s p cs time =
         {- makeCircle p d c
            PRE:       p must be valid coordinates.
            POST:      A circle of size d, color c on position p.
-           EXAMPLES:  makeCircle ==
         -}
         makeCircle :: (Int, Int) -> Int -> Color -> Picture
         makeCircle p d c = translateAndColor p d c (circleSolid (fromIntegral (d `div` 3)))
@@ -118,6 +117,11 @@ drawMap b s p cs time =
            PRE:       p must be valid coordinates
            POST:      Shape s positioned based on p and d with color c.
            EXAMPLES:  translateAndColor ==
+           EXAMPLES:  makeCircle ==
         -}
         translateAndColor :: (Common.Position a) => (a, a) -> Int -> Color -> Picture -> Picture
-        translateAndColor p d c = (Common.setCoordinate p $ fromIntegral d) . color c
+        translateAndColor p d c =
+          let
+            rowLength = fromIntegral (round (sqrt (fromIntegral (length b))))
+          in
+            (Common.setCoordinate p (fromIntegral d) rowLength) . (color c)
