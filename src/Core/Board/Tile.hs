@@ -18,7 +18,7 @@ type Treasure = Bool
 {- position a
    PRE:       True
    POST:      The current position of a.
-   EXAMPLES:  position (Floor (1, 1)) == (1, 1)
+   EXAMPLES:  position (Floor (1, 1) True) == (1, 1)
 -}
 position :: Tile -> (Int, Int)
 position (Floor a _) = a
@@ -33,6 +33,12 @@ setPosition :: Tile -> Int -> Int -> Tile
 setPosition (Floor _ i) x y = Floor (x, y) i
 setPosition (Wall _)    x y = Wall (x, y)
 
+{- hasTreasure t
+   PRE:       True.
+   POST:      True f t has a treasure, otherwise False.
+   EXAMPLES:  hasTreasure (Floor (1,1) True) == True
+              hasTreasure (Wall (1,1))       == False
+-}
 hasTreasure :: Tile -> Bool
 hasTreasure (Floor _ i) = i
 hasTreasure _           = False

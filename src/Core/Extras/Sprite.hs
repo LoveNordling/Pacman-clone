@@ -18,6 +18,7 @@ import qualified Core.Extras.Resources as Resources
      The direction must be either (-1,0) or (1,0).
 -}
 data Sprite = Sprite Picture (Float, Float)
+              deriving (Eq, Show)
 
 -- A list of sprites
 type Sprites = [Sprite]

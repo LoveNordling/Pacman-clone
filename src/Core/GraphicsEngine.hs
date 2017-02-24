@@ -18,24 +18,17 @@ import qualified Core.Extras.Resources as Resources
 
 {-# ANN module "HLint: Ignore Use mappend" #-}
 
+-- The number of pixels of the game window
 mapSize :: Int
 mapSize = 1000
 
-{- tileSize n
-   PRE:           n > 0
-   POST:          the width and height of a tile based on n.
-   EXAMPLES:      tileSize  ==
+{- tileSize b
+   PRE:       length of b > 0.
+   POST:      The width and height of a tile based on b.
+   EXAMPLES:  tileSize  ==
 -}
 tileSize :: Board.Board -> Int
---tileSize b = 40         --TODO Change definitions of tileSize to constant
 tileSize b = 19 * round (sqrt ( fromIntegral (mapSize) / fromIntegral (length b) ))
-{- mapDimensions b
-   PRE:       True.
-   POST:      Dimensions of b.
-   EXAMPLES:  mapDimensions ==
--}
-mapDimensions :: Board.Board -> (Int, Int)
-mapDimensions b = fst $ bounds b
 
 {- render s
    PRE:       True
@@ -53,12 +46,12 @@ render (GameState.Splash s _) = drawText s
 -}
 drawText :: String -> Picture
 drawText s = (translate (-110) (-30) . color red) (Scale 0.3 0.3 (Text s))
--- Hardcoded because it's not possible tocalculate type Text width/height
+-- Hardcoded because it's not possible to calculate type Text width/height
 
 {- drawMap t p c
-   PRE:           True
-   POST:          The image to be displayed, based on t with entities p and c.
-   EXAMPLES:      drawMap ==
+   PRE:       True
+   POST:      The image to be displayed, based on t with entities p and c.
+   EXAMPLES:  drawMap ==
 -}
 drawMap :: Board.Board -> Actor.Actor -> [Actor.Actor] -> Float -> Picture
 drawMap b p cs time =
@@ -80,9 +73,7 @@ drawMap b p cs time =
         drawActor d time a = translateAndColor p d green (Scale 0.1 0.1 s)
           where
             p = Actor.position a
-            n = Actor.direction a
             s = Actor.getPicture a
-            t = round time
         {- drawInterior t f acc
            PRE:       True
            POST:      The interiors in t to be displayed.

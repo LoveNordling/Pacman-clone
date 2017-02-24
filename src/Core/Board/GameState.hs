@@ -1,7 +1,6 @@
 module Core.Board.GameState
         ( GameState(..), initialState
-        , newState, nextState
-        )
+        , newState, nextState )
 where
 
 import qualified Core.Board.Actor as Actor

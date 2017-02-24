@@ -22,12 +22,14 @@ fps = 60
 --Maximum amount of AIs
 maxAI :: Int
 maxAI = 5
+
 --The time it takes for a ghost to spawn
 spawnTime :: Float
 spawnTime = 5.0
+
 --The amount of time between each frame (Used for Ghost spawning)
 timeStep :: Float
-timeStep = 1/(fromIntegral fps)
+timeStep = 1 / (fromIntegral fps)
 
 -- The player and AI speeds
 playerSpeed, aiSpeed :: (Float, Float)
@@ -130,7 +132,7 @@ setMovement (State level s (Actor.Actors player ai) t) =
   where
     {- spawnAI (State b s p cs t)
        PRE:
-       POST:     The state with a new ghost if t > spawnTime and length cs < maxAI
+       POST:     New AIs if t > spawnTime and length cs < maxAI
        EXAMPLES:
     -}
     spawnAI :: Level.Level -> Float -> [Actor.Actor] -> ([Actor.Actor], Float)
@@ -161,10 +163,10 @@ setAIMovements board p c = map (setAIMovement board (Actor.position p)) c
     setAIMovement :: Board -> (Float, Float) -> Actor.Actor -> Actor.Actor
     setAIMovement board xy c
       | null paths = Actor.createAI position direction (calculateAIMovement board xy position) sprites
-      | zero direction = changeAIDirection position [(closestTile position)] (calculateAIMovement board xy position) sprites
+      | zero direction = changeAIDirection position (calculateAIMovement board xy position) sprites
       | otherwise =
         if (hasReachedDestination aiSpeed position (head paths))
-          then changeAIDirection position paths (calculateAIMovement board xy position) sprites
+          then changeAIDirection position (calculateAIMovement board xy position) sprites
           else Actor.createAI position direction paths sprites
       where
         position  = Actor.position c
@@ -191,13 +193,13 @@ setAIMovements board p c = map (setAIMovement board (Actor.position p)) c
            EXAMPLES:  changeAIDirection ==
         -}
         -- TODO: WRITE BETTER FUNCTION SPECIFICATION
-        changeAIDirection :: (Float, Float) -> [(Int, Int)] -> [(Int, Int)] -> Sprite.Sprites -> Actor.Actor
-        changeAIDirection position oldPath@((x, y):_) newPath@((x', y'):_) sprites =
+        changeAIDirection :: (Float, Float) -> [(Int, Int)] -> Sprite.Sprites -> Actor.Actor
+        changeAIDirection position path@((x', y'):_) sprites =
           let
             -- Calculates the next direction?
-            direction = (fromIntegral x', fromIntegral y') - (fromIntegral x, fromIntegral y)
+            direction = (fromIntegral x', fromIntegral y') - position
           in
-            Actor.createAI position direction newPath sprites
+            Actor.createAI position direction path sprites
 
 {- setPlayerMovement arguments
    PRE:       True?
@@ -247,11 +249,11 @@ isValidMove :: Board -> (Int, Int) -> Bool
 isValidMove board position =
   case (board ! position) of
     (Tile.Floor _ _) -> True
-    _           -> False
+    _                -> False
 
 {- approximatePosition p s
    PRE:       True
-   POST:      The nearest whole number position to p if the distance between it and p is less than os, otherwise p.
+   POST:      The nearest whole number position to p if the distance between it and p is less than s, otherwise p.
    EXAMPLES:  approximatePosition  ==
 -}
 approximatePosition :: (Float, Float) -> Float -> (Float, Float)
