@@ -1,5 +1,5 @@
-module Core.Board.Tile (Tile(..), position, setPosition, hasTreasure) where
-
+module Core.Board.Tile (Tile(..), position, setPosition, hasTreasure, testSuite) where
+import Test.HUnit
 {-
   REPRESENTATION CONVENTION:
     A tile is an unmovable piece on the board.
@@ -42,3 +42,22 @@ setPosition (Wall _)    x y = Wall (x, y)
 hasTreasure :: Tile -> Bool
 hasTreasure (Floor _ i) = i
 hasTreasure _           = False
+
+-----------------------------------------
+-- TEST CASES
+-----------------------------------------
+test1, test2, test3, test4, test5, test6, test7 :: Test
+testSuite = TestList [test1, test2, test3, test4, test5, test6, test7]
+
+-- position
+test1 = TestLabel "position" $ TestCase $ assertEqual "Position" ((1,2)) (position (Floor (1,2) True))
+test2 = TestLabel "position" $ TestCase $ assertEqual "Position" ((0,0)) (position (Floor (0,0) False))
+
+-- setPosition
+test3 = TestLabel "setPosition" $ TestCase $ assertEqual "setPosition" (Floor (3,4) True) (setPosition (Floor (1,2) True) 3 4)
+test4 = TestLabel "setPosition" $ TestCase $ assertEqual "setPosition" (Wall (3,4)) (setPosition (Wall (1,2)) 3 4)
+
+--hasTreasure
+test5 = TestLabel "hasTreasure" $ TestCase $ assertEqual "hasTreasure" (True) (hasTreasure (Floor (1,2) True))
+test6 = TestLabel "hasTreasure" $ TestCase $ assertEqual "hasTreasure" (False) (hasTreasure (Wall (1,2)))
+test7 = TestLabel "hasTreasure" $ TestCase $ assertEqual "hasTreasure" (False) (hasTreasure (Floor (1,2) False))

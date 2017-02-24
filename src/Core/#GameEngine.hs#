@@ -29,7 +29,7 @@ spawnTime = 5.0
 
 --The amount of time between each frame (Used for Ghost spawning)
 timeStep :: Float
-timeStep = 1 / (fromIntegral fps)
+timeStep = 1/(fromIntegral fps)
 
 -- The player and AI speeds
 {- playerSpeed
@@ -121,13 +121,13 @@ moveActors state@(State l s (Actor.Actors player ai) t)
        VARIANT:   |ai|
        EXAMPLES:  caughtPlayer ==
     -}
-
+    
     caughtPlayer :: [Actor.Actor] -> Actor.Actor -> Bool
     caughtPlayer []            _ = False
     caughtPlayer (ai:ais) player = (abs (x - a) < 0.5 && abs (y - b) < 0.5) || ais `caughtPlayer` player
       where
         (a, b) = Actor.position ai
-        (x, y) = Actor.position player
+        (x, y) = Actor.position player        
 moveActors state  = state -- On game over!
 
 {- setMovement s
@@ -144,13 +144,13 @@ setMovement (State level s (Actor.Actors player ai) t) =
   in
     State level s (Actor.Actors (setPlayerMovement board player) (setAIMovements board player newAI)) t'
   where
-
+    
     {- spawnAI (State b s p cs t)
        PRE:
-       POST:     New AIs if t > spawnTime and length cs < maxAI
+       POST:     The state with a new ghost if t > spawnTime and length cs < maxAI
        EXAMPLES:
     -}
-
+    
     spawnAI :: Level.Level -> Float -> [Actor.Actor] -> ([Actor.Actor], Float)
     spawnAI level t cs =
       let
@@ -179,11 +179,11 @@ setAIMovements board p c = map (setAIMovement board (Actor.position p)) c
     -}
     setAIMovement :: Board -> (Float, Float) -> Actor.Actor -> Actor.Actor
     setAIMovement board xy c
-      | null paths = Actor.createAI position direction (calculateAIMovement board xy position) sprites
-      | zero direction = changeAIDirection position (calculateAIMovement board xy position) sprites
-      | otherwise =
+      | null paths     = Actor.createAI position direction (calculateAIMovement board xy position) sprites
+      | zero direction = changeAIDirection position [(closestTile position)] (calculateAIMovement board xy position) sprites
+      | otherwise      =
         if (hasReachedDestination aiSpeed position (head paths))
-          then changeAIDirection position (calculateAIMovement board xy position) sprites
+          then changeAIDirection position paths (calculateAIMovement board xy position) sprites
           else Actor.createAI position direction paths sprites
       where
         position  = Actor.position c
@@ -210,13 +210,13 @@ setAIMovements board p c = map (setAIMovement board (Actor.position p)) c
            EXAMPLES:  changeAIDirection ==
         -}
         -- TODO: WRITE BETTER FUNCTION SPECIFICATION
-        changeAIDirection :: (Float, Float) -> [(Int, Int)] -> Sprite.Sprites -> Actor.Actor
-        changeAIDirection position path@((x', y'):_) sprites =
+        changeAIDirection :: (Float, Float) -> [(Int, Int)] -> [(Int, Int)] -> Sprite.Sprites -> Actor.Actor
+        changeAIDirection position oldPath@((x, y):_) newPath@((x', y'):_) sprites =
           let
             -- Calculates the next direction?
-            direction = (fromIntegral x', fromIntegral y') - position
+            direction = (fromIntegral x', fromIntegral y') - (fromIntegral x, fromIntegral y)
           in
-            Actor.createAI position direction path sprites
+            Actor.createAI position direction newPath sprites
 
 {- setPlayerMovement arguments
    PRE:       True?
@@ -236,6 +236,7 @@ setPlayerMovement board player
         player
   where
     (position, (direction, nextDirection), sprites) = (Actor.position player, Actor.directions player, Actor.sprites player)
+    
     {- setPlayerDirection b c d n
        PRE:       True
        POST:      If tile at position c + d is valid, then d. Otherwise n
@@ -271,16 +272,12 @@ isValidMove :: Board -> (Int, Int) -> Bool
 isValidMove board position =
   case (board ! position) of
     (Tile.Floor _ _) -> True
-    _                -> False
+    _           -> False
 
 {- approximatePosition p s
    PRE:       True
-<<<<<<< HEAD
-   POST:      The nearest whole number position to p if the distance between it and p is less than s, otherwise p.
-=======
    POST:      The nearest whole number position to p if the distance between it and p is less than os, otherwise p.
    SIDE EFFECTS: none
->>>>>>> 0dd8369f7ff15192714a19a09380b7912aa741c4
    EXAMPLES:  approximatePosition  ==
 -}
 approximatePosition :: (Float, Float) -> Float -> (Float, Float)
