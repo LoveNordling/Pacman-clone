@@ -5,7 +5,7 @@ import Data.Array
 import Test.HUnit
 
 import Core.Board.Tile hiding (testSuite)
-import Core.Board.Board
+import Core.Board.Board hiding (testSuite)
 import qualified Core.Board.Level as L
 
 {- validCoordinates arguments

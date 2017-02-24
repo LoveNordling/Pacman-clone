@@ -1,13 +1,14 @@
 import Test.Hspec
 import Test.Hspec.Contrib.HUnit (fromHUnitTest)
 
-import qualified Core.GraphicsEngine as GraphicsEngine
-import qualified Core.GameEngine as GameEngine
---import qualified Core.Board.Tile as Tile
-import qualified Core.Board.Actor as Actor
-import qualified Core.Board.Board as Board
-import qualified Core.Board.GameState as GameState
-import qualified Core.AI as AI
+import qualified Core.GraphicsEngine as GraphicsEngine (testSuite)
+import qualified Core.GameEngine as GameEngine --(testSuite)
+import qualified Core.Board.Tile as Tile (testSuite)
+import qualified Core.Board.Actor as Actor (testSuite)
+import qualified Core.Board.Board as Board (testSuite)
+import qualified Core.Board.Level as Level (testSuite)
+import qualified Core.Board.GameState as GameState (testSuite)
+import qualified Core.AI as AI (testSuite)
 
 main :: IO ()
 main = hspec $ do
@@ -17,3 +18,13 @@ main = hspec $ do
         fromHUnitTest AI.testSuite
     describe "Tile Test Suite" $ do
         fromHUnitTest Tile.testSuite
+    describe "Level Test Suite" $ do
+        fromHUnitTest Level.testSuite
+    describe "Board Test Suite" $ do
+        fromHUnitTest Board.testSuite
+    describe "Actor Test Suite" $ do
+        fromHUnitTest Actor.testSuite
+    describe "GameState Test Suite" $ do
+        fromHUnitTest GameState.testSuite
+    describe "" $ do
+        GameEngine.testSuiteExceptions

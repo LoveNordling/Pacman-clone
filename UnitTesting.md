@@ -44,5 +44,5 @@ And that's it. Though it is better one person does this last part, so we don't o
 You run tests using cabal. Type in the Terminal, from within the __root__ folder of the project:
 
 ```bash
-$ cabal test
+$ cabal test --show-details=always
 ```

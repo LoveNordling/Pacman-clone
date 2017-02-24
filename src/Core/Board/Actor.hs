@@ -31,7 +31,7 @@ data Actor = Player   Position Direction Direction Sprite.Sprites
    REPRESENTATION INVARIANT:
       The first Actor must be a Player. The list of Actor must be Computers.
  -}
-data Actors = Actors Actor [Actor]
+data Actors = Actors Actor [Actor] deriving (Eq, Show)
 
 -- Paths of the AI
 type Paths = [(Int, Int)]
@@ -164,14 +164,13 @@ getPicture a = pictureFromDirection (sprites a) (direction a)
 -}
 pictureFromDirection :: Sprite.Sprites -> Direction -> Picture
 pictureFromDirection ((Sprite.Sprite s x):xs) d
-  | length xs == 0 || d == x = s
+  | null xs || d == x = s
   | otherwise = pictureFromDirection xs d
-
 
 -------------------------------------------
 -- TEST CASES
 -------------------------------------------
-test1 :: Test
+test1, test2, test3, test4, test5, test6, test7, test8, test9, test10, test11, test12, test13 :: Test
 testSuite = TestList [ test1, test2, test3, test4, test5, test6, test7, test8, test9, test10, test11, test12, test13 ]
 
 -- createPlayer
