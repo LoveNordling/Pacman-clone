@@ -4,7 +4,7 @@ import Data.List
 import Data.Array
 import Test.HUnit
 
-import Core.Board.Tile
+import Core.Board.Tile hiding (testSuite)
 import Core.Board.Board
 import qualified Core.Board.Level as L
 

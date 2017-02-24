@@ -236,6 +236,7 @@ setPlayerMovement board player
         player
   where
     (position, (direction, nextDirection), sprites) = (Actor.position player, Actor.directions player, Actor.sprites player)
+    
     {- setPlayerDirection b c d n
        PRE:       True
        POST:      If tile at position c + d is valid, then d. Otherwise n
