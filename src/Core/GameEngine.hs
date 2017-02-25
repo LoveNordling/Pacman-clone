@@ -1,21 +1,24 @@
 module Core.GameEngine
-        ( step, handleKeyEvents, fps, testSuite ) where
+        ( step, handleKeyEvents, fps, testSuite, testSuiteExceptions ) where
 
-import Control.DeepSeq
+-- Modules for testing
+import Test.Hspec
 import Test.HUnit hiding (State)
-import Test.Hspec --(it, shouldThrow, anyException)
+import Control.Exception (evaluate)
+
+-- External modules
 import Data.Array
-import Control.Exception-- (evaluate)
 import Graphics.Gloss.Interface.Pure.Game
+
+-- Internal modules
 import qualified Core.Board.Actor as Actor hiding (testSuite)
 import qualified Core.Board.Level as Level hiding (testSuite)
 import qualified Core.Board.Board as Board hiding (testSuite)
 import qualified Core.Board.Tile as Tile
 import qualified Core.Extras.Sprite as Sprite
-import qualified Core.Extras.Resources as Resources
 import qualified Core.AI as AI
-import Core.Extras.Common
-import Core.Board.GameState hiding (testSuite)
+import qualified Core.Extras.Common as Common
+import qualified Core.Board.GameState as GameState hiding (testSuite)
 
 {-# ANN module "HLint: Ignore Use fmap" #-}
 
@@ -56,9 +59,9 @@ actorSpeed speed fps = (speed / fps, speed / fps)
    SIDE EFFECTS:  None
    EXAMPLES:      Calling step on 1.0 and a state that is not a splash page gives an updated state.
 -}
-step :: Float -> GameState -> GameState
-step _ state@(Splash _ _) = state
-step _ state              = moveActors (setMovement state)
+step :: Float -> GameState.GameState -> GameState.GameState
+step _ state@(GameState.Splash _ _) = state
+step _ state                        = moveActors (setMovement state)
 
 {- handleKeyEvents e g
    PRE:           True
@@ -66,10 +69,11 @@ step _ state              = moveActors (setMovement state)
    SIDE EFFECTS:  None
    EXAMPLES:      Calling handleKeyEvents with the input event EventKey SpecialKey KeyUp and a state sets the direction of the player character in state to (0,1).
 -}
-handleKeyEvents :: Event -> GameState -> GameState
-handleKeyEvents (EventKey (SpecialKey k) Down _ _) (State b s (Actor.Actors p c) t) = State b s (Actor.Actors (changePlayerMovement p k) c) t
-handleKeyEvents (EventKey _ Down _ _) (Splash _ s) = s
-handleKeyEvents _ state                            = state
+handleKeyEvents :: Event -> GameState.GameState -> GameState.GameState
+handleKeyEvents (EventKey (SpecialKey k) Down _ _) (GameState.State b s (Actor.Actors p c) t) =
+  GameState.State b s (Actor.Actors (changePlayerMovement p k) c) t
+handleKeyEvents (EventKey _ Down _ _) (GameState.Splash _ state) = state
+handleKeyEvents _ state = state
 
 {- changePlayerMovement p
    PRE:           True
@@ -100,13 +104,13 @@ changePlayerMovement player k =
    EXAMPLES:      moveActors (setMovement (nextState initialState)) == a new state with the position of the states actors updated one step according to their direction.
                   moveActors (nextState initialState) == (nextState initialState)
 -}
-moveActors :: GameState -> GameState
-moveActors state@(State l s (Actor.Actors player ai) t)
-  | levelGoal <= s = Splash "Level done!" (nextState state)
+moveActors :: GameState.GameState -> GameState.GameState
+moveActors state@(GameState.State l s (Actor.Actors player ai) t)
+  | levelGoal <= s = GameState.Splash "Level done!" (GameState.nextState state)
   | otherwise      =
     if newAI `caughtPlayer` newPlayer
-      then Splash "Game Over!" initialState
-      else State level score (Actor.Actors newPlayer newAI) t
+      then GameState.Splash "Game Over!" GameState.initialState
+      else GameState.State level score (Actor.Actors newPlayer newAI) t
   where
     levelGoal      = Level.getGoal l
     newAI          = map (Actor.makeMove aiSpeed) ai
@@ -135,13 +139,13 @@ moveActors state  = state -- On game over!
    SIDE EFFECTS:  None
    EXAMPLES:      setMovement (nextState initialState) == a state where the movements of the actors have been updated one step.
 -}
-setMovement :: GameState -> GameState
-setMovement (State level s (Actor.Actors player ai) t) =
+setMovement :: GameState.GameState -> GameState.GameState
+setMovement (GameState.State level s (Actor.Actors player ai) t) =
   let
     board       = Level.getBoard level
     (newAI, t') = spawnAI level (t + timeStep) ai
   in
-    State level s (Actor.Actors (setPlayerMovement board player) (setAIMovements board player newAI)) t'
+    GameState.State level s (Actor.Actors (setPlayerMovement board player) (setAIMovements board player newAI)) t'
   where
     {- spawnAI l t c
        PRE:           spawn position of l must be valid coordinates for the board of l.
@@ -179,7 +183,7 @@ setAIMovements board p c = map (setAIMovement board (Actor.position p)) c
     -}
     setAIMovement :: Board.Board -> (Float, Float) -> Actor.Actor -> Actor.Actor
     setAIMovement board xy c
-      | zero direction || null paths = changeAIDirection position (calculateAIMovement board xy position)
+      | Common.zero direction || null paths = changeAIDirection position (calculateAIMovement board xy position)
       | otherwise =
         if (hasReachedDestination aiSpeed position (head paths))
           then changeAIDirection position (calculateAIMovement board xy position)
@@ -220,8 +224,9 @@ setAIMovements board p c = map (setAIMovement board (Actor.position p)) c
 -}
 setPlayerMovement :: Board.Board -> Actor.Actor -> Actor.Actor
 setPlayerMovement board player
-  | zero direction && zero nextDirection = player
-  | zero (direction + nextDirection)     = Actor.createPlayer position nextDirection nextDirection sprites -- fixes 180 movement delay bug.
+  | Common.zero direction && Common.zero nextDirection = player
+  | Common.zero (direction + nextDirection) =
+    Actor.createPlayer position nextDirection nextDirection sprites -- fixes 180 movement delay bug.
   | otherwise =
     if (hasReachedDestination playerSpeed position (closestTile position))
       then
@@ -300,41 +305,79 @@ hasReachedDestination (speed,_) current (x, y) = (approximatePosition current sp
 -------------------------------------------
 -- TEST CASES
 -------------------------------------------
---test1, test2, test3, test4, test5, test6, test7 :: Test
---testSuite = TestList [ test1, test2, test3, test4, test5, test6, test7 ]
-testSuite = undefined
--- step
--- Comparing computer and player positions after two steps to see if the function performs.
-test1 =
+test1, test2, test3, test4, test5, test6, test7 :: Test
+testSuite = TestList [ test1, test2, test3, test4, test5, test6, test7 ]
+-- Setups
+testBoard = Level.getBoard level
+  where (Just (level,_)) = Level.setLevel 0
+
+-- step, changePlayerMovement
+test1 = -- Comparing computer and player positions after two steps to see if the function performs.
   let
-    (State l s (Actor.Actors p1 c1) _) = step 0 (nextState initialState)
-    s1 = State l s (Actor.Actors (changePlayerMovement p1 KeyUp) c1) 0
-    s2@(State _ _ (Actor.Actors p2 c2) _) = step 0 s1
+    (GameState.State l _ (Actor.Actors p1 c1) _) = step 0 (GameState.nextState GameState.initialState)
+    s1 = GameState.State l 0 (Actor.Actors (changePlayerMovement p1 KeyUp) c1) 0
+    s2@(GameState.State _ _ (Actor.Actors p2 c2) _) = step 0 s1
     (cp1, cp2) = (Actor.position (head c1), Actor.position (head c2))
     (pp1, pp2) = (Actor.position p1, Actor.position (p2))
   in
-    TestLabel "Step Test #1" . TestCase $ assertBool "" (cp1 /= cp2 && pp1 /= pp2)
+    TestLabel "Step Test #1" . TestCase $ assertBool "Both AI and player should move" (cp1 /= cp2 && pp1 /= pp2)
 -- changePlayerMovement
-test2 =
+test2 = -- Testing direction change
   let p = Actor.directions $ changePlayerMovement (Actor.createPlayer (0,0) (0,0) (0,0) []) KeyUp
-  in  TestLabel "Change Player Movement Test #1" . TestCase $ assertEqual "" (0,1) (snd p)
+  in  TestLabel "Change Player Movement Test #1" . TestCase $ assertEqual "Should return new actor directions" (0,1) (snd p)
 test3 =
   let p = Actor.directions $ changePlayerMovement (Actor.createPlayer (0,0) (0,0) (0,1) []) KeyBegin
-  in  TestLabel "Change Player Movement Test #1" . TestCase $ assertEqual "" (0,1) (snd p)
--- moveActors and setMovement
--- test4 =
---   let
---     state1 = moveActors (setMovement (nextState initialState))
---     state2 = moveActors state1
+  in  TestLabel "Change Player Movement Test #2" . TestCase $ assertEqual "Should return actor as is" (0,1) (snd p)
+-- moveActors
+test4 =
+  let
+    Just (l,_) = Level.setLevel 0
+    p = Actor.createPlayer (1,1) (-1,0) (1,0) []
+    (GameState.State _ _ (Actor.Actors p2 _) _) = moveActors (GameState.State l 0 (Actor.Actors p []) 0)
+  in
+    TestLabel "Move Actors Test #1" .
+      TestCase $ assertBool "Actor position should change" ((Actor.position p) > (Actor.position p2))
+-- setAIMovements
+test5 =
+  let
+    player = Actor.createPlayer (3,3) (0,0) (0,0) []
+    ai     = Actor.createAI (7,6) (0,0) [] []
+    newAI  = head (setAIMovements testBoard player [ai])
+  in
+    TestLabel "Set AI Movements Test #1" .
+      TestCase $ assertBool "AI direction should change" ((Actor.direction ai) /= (Actor.direction newAI))
+-- setPlayerMovement
+test6 =
+  let
+    a = Actor.createPlayer (1,1) (0,0) (0,0) Sprite.player
+    n = setPlayerMovement testBoard a
+  in
+    TestLabel "Set Player Movement Test #1" .
+      TestCase $ assertEqual "Should return the player as is" (a) (n)
+test7 =
+  let
+    d = (0,1)
+    a = Actor.createPlayer (1,1) (1,0) d Sprite.player
+    n = setPlayerMovement testBoard a
+  in
+    TestLabel "Set Player Movement Test #1" .
+      TestCase $ assertEqual "Should return the desired direction as its current direction" (d) (Actor.direction n)
 
-
--- Exception tests
+-- EXCEPTION TESTS
 -- Using HSpec because HUnit sucks
--- testSuiteExceptions =
---   it "Move actors and set movement exception test #1" $ do
---     let (State l _ _ _) = nextState initialState
---     let a = Actor.createPlayer (10,10) (0,0) (0,0) []
---     let s = State l 0 (Actor.Actors a []) 0
---     let m = do return (step 0 s)
---     m `shouldThrow` (errorCall "Index")
---     -- expectationFailure "Hej"
+-------------------------------------------
+testSuiteExceptions = do
+  describe "Step Exception Tests" $ do
+    it "Should throw exception Error in array index" $ do
+      let (GameState.State level _ _ _) = GameState.nextState GameState.initialState
+      let state = GameState.State level 0 (Actor.Actors (Actor.createPlayer (10,10) (0,0) (0,0) []) []) 0
+      let (GameState.State badLevel _ _ _) = step 0 state
+      -- we must pattern match here, otherwise we'll get an uncaught exception because of nested data types and lazy eval bullshit, I think. See HSpec source for their impl of shouldThrow (it returns an Either, but if the exception is nested within a data type it will still be a Right ...).
+      evaluate (badLevel) `shouldThrow` (errorCall "Error in array index")
+  describe "Set AI movements Exception Test" $ do
+    it "Should throw exception Error in array index" $ do
+      let player = Actor.createPlayer (1,1) (0,0) (0,0) []
+      let someAI = Actor.createAI (10,10) (0,0) [] []
+      -- Again, we need to actually retrieve the element that throws an exception (Right with Left still gives a Right...)
+      let badAI  = head (setAIMovements testBoard player [someAI])
+      evaluate (badAI) `shouldThrow` (errorCall "Error in array index")

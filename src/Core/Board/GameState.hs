@@ -1,8 +1,11 @@
 module Core.Board.GameState
         ( GameState(..), initialState, newState, nextState, testSuite ) where
 
+-- Modules for testing
 import Test.HUnit hiding (State)
+-- External modules
 import Data.Maybe
+-- Internal modules
 import qualified Core.Board.Actor as Actor
 import qualified Core.Board.Level as Level
 import qualified Core.Extras.Sprite as Sprite
@@ -17,10 +20,9 @@ import qualified Core.Extras.Resources as Resources
   REPRESENTATION INVARIANT:
     Score should not be greater than the level goal of the Level.
 -}
-
 data GameState = State Level.Level Score Actor.Actors Float
                | Splash String GameState
-               deriving (Show, Eq)
+               deriving (Show, Eq) -- only for testing purposes
 
 -- Represents the score of the player
 type Score = Int
@@ -31,7 +33,7 @@ initialState = Splash "Press to Play" (newState (Level.setLevel 0) 0)
 
 {- nextState s
    PRE:           s should be a State
-   POST:          A new state based on level number  s
+   POST:          A new state based on level number s
    SIDE EFFECTS:  None
    EXAMPLES:      nextState (newState (Level.setLevel 0) Sprite.player 0) gives a new State with level 1
 -}
@@ -61,11 +63,9 @@ test1, test2, test3 :: Test
 testSuite = TestList [ test1, test2, test3 ]
 -- nextState
 test1 =
-  let
-    splash@(Splash _ state) = initialState
-  in
-    TestLabel "Next State Test #1" .
-      TestCase $ assertEqual "" (state) (nextState initialState)
+  let splash@(Splash _ state) = initialState
+  in  TestLabel "Next State Test #1" .
+        TestCase $ assertEqual "Should give the next state" (state) (nextState initialState)
 -- newState
 -- testing whether the position of the player is correct
 test2 =
@@ -77,7 +77,7 @@ test2 =
     (State _ _ (Actor.Actors p _) _) = newState level 0
   in
     TestLabel "Next State Test #1" .
-      TestCase $ assertEqual "" (Actor.position p) (position)
+      TestCase $ assertEqual "Should give correct position" (Actor.position p) (position)
 test3 =
     TestLabel "Next State Test #2" .
-      TestCase $ assertEqual "" (initialState) (nextState $ newState Nothing 0)
+      TestCase $ assertEqual "Should give the initial state" (initialState) (nextState $ newState Nothing 0)

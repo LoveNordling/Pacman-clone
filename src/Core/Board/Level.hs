@@ -1,8 +1,13 @@
 module Core.Board.Level
-        ( Level, setLevel, getBoard, getGoal, getLevelNumber, checkForTreasure, spawnPosition, nextLevel, testSuite ) where
+        ( Level, nextLevel, setLevel, getBoard, getGoal, getLevelNumber, checkForTreasure, spawnPosition, testSuite, testSuiteExceptions ) where
 
+-- Modules for testing
 import Test.HUnit
+import Test.Hspec
+import Control.Exception (evaluate)
+-- External modules
 import Data.Array
+-- Internal modules
 import qualified Core.Board.Board as Board
 import qualified Core.Board.Actor as Actor
 import qualified Core.Board.Tile as Tile
@@ -12,25 +17,26 @@ import qualified Core.Extras.Resources as Resources
 
 {-
   REPRESENTATION CONVENTION:
-    A level is given by Level b xy n g. The first argument, b, is the board, map, of the level while the second is the default position for the AIs to spawn on. The level number is n, and g is the number of treasures on a map.
+    A level is given by Level b xy n g. The first argument, b, is the board, map, of the level while the second is the default position for the AIs to spawn on. The level number is n, and g is the total number of treasures on a map that a player must collect in order to advance to the next.
 
   REPRESENTATION INVARIANT:
-    The number of treasures on a map must be over 0.
+    The number of treasures on a map must be above 0. The default position of the AI must be valid positions on the board.
 -}
-data Level = Level Board.Board (Float, Float) Int Int deriving (Eq, Show)
+data Level = Level Board.Board (Float, Float) Int Int
+           deriving (Eq, Show) -- for testing purposes only
 
 {- nextLevel l
    PRE:           True
-   POST:          A level with level number one above the level number of l. If such a level does not exist, then Nothing
+   POST:          A new level with level number one above the level number of l. If such a level does not exist, then Nothing
    SIDE EFFECTS:  None
-   EXAMPLES:      Calling nextLevel on a level with level number 1 gives a level with number 2 if it exists
+   EXAMPLES:      Calling nextLevel on a level with level number 0 gives a level with number 1
 -}
 nextLevel :: Level -> Maybe (Level, (Float, Float))
 nextLevel (Level _ _ n _) = setLevel (n+1)
 
 {- setLevel i
    PRE:           i >= 0
-   POST:          If there exists a map with number i, then a level with that map as board together with the starting position of the player, otherwise Nothing
+   POST:          If there exists a map with number i, then a level with that map as a Board together with the starting position of the player, otherwise Nothing
    SIDE EFFECTS:  None
    EXAMPLES:      setLevel 0 gives the first level
 -}
@@ -132,11 +138,13 @@ spawnPosition (Level _ p _ _) = p
 test1, test2, test3, test4 :: Test
 testSuite = TestList [ test1, test2, test3, test4 ]
 -- nextLevel
-test1 = let Just (level, _) = setLevel 0
-        in  TestLabel "Next Level Test #1" .
-              TestCase $ assertEqual "" (100) (length (getBoard level))
-test2 = TestLabel "Next Level Test #1" .
-          TestCase $ assertEqual "" (Nothing) (setLevel (10))
+test1 =
+  let Just (level, _) = setLevel 0
+  in  TestLabel "Next Level Test #1" .
+        TestCase $ assertEqual "Should return a level with a board with 100 elements" (100) (length (getBoard level))
+test2 =
+  TestLabel "Next Level Test #1" .
+    TestCase $ assertEqual "Should return Nothing" (Nothing) (setLevel (10))
 -- checkForTreasure
 test3 =
   let
@@ -145,7 +153,7 @@ test3 =
     level = Level board ((0,0)) 0 0
   in
     TestLabel "Check For Treasure Test #1" .
-      TestCase $ assertEqual "" (Nothing) (checkForTreasure level (0,0))
+      TestCase $ assertEqual "Should return Nothing" (Nothing) (checkForTreasure level (0,0))
 test4 =
   let
     itemFloor = Tile.Floor (0,0) True
@@ -157,4 +165,13 @@ test4 =
               _       -> True
   in
     TestLabel "Check For Treasure Test #1" .
-      TestCase $ assertEqual "" (True) (check)
+      TestCase $ assertEqual "Should return True" (True) (check)
+
+-- EXCEPTION TESTS
+-- Using HSpec because HUnit sucks
+-------------------------------------------
+testSuiteExceptions = do
+  describe "Set Level Exception Test #1" $ do
+    it "Should throw exception: Prelude.!!: negative index" $ do
+      let (Just (level,_))= setLevel (-1)
+      evaluate (getBoard level) `shouldThrow` (errorCall "Prelude.!!: negative index")

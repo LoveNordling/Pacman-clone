@@ -1,14 +1,13 @@
 module Core.Board.Actor
-        ( Actor , Actors(..), Position, Direction
-        , makeMove , position, getPicture, sprites
-        , createAI , createPlayer
-        , directions , direction
-        , paths, isAI, testSuite )
-where
+        ( Actor , Actors(..), Position, Direction , createPlayer, directions , createAI, paths , position, direction, makeMove, isAI, sprites , getPicture, testSuite ) where
 
+-- Modules for testing
 import Test.HUnit
+
+-- External modules
 import Graphics.Gloss
 
+-- Internal modules
 import qualified Core.Extras.Sprite as Sprite
 
 {-
@@ -22,7 +21,7 @@ import qualified Core.Extras.Sprite as Sprite
 -}
 data Actor = Player   Position Direction Direction Sprite.Sprites
            | Computer Position Direction Paths Sprite.Sprites
-           deriving (Eq, Show)
+           deriving (Eq, Show) -- Only for unit testing purposes
 
  {-
    REPRESENTATION CONVENTION:
@@ -31,17 +30,18 @@ data Actor = Player   Position Direction Direction Sprite.Sprites
    REPRESENTATION INVARIANT:
       The first Actor must be a Player. The list of Actor must be Computers.
  -}
-data Actors = Actors Actor [Actor] deriving (Eq, Show)
+data Actors = Actors Actor [Actor]
+            deriving (Eq, Show) -- Only for unit testing purposes
 
--- Paths of the AI
-type Paths = [(Int, Int)]
+-- The position of the actor
+type Position = (Float, Float)
 
 -- Direction of Actor.
 -- First component is horizontal movement, second is vertical movement.
 type Direction = (Float, Float)
 
--- The position of the actor
-type Position = (Float, Float)
+-- Paths of the AI
+type Paths = [(Int, Int)]
 
 -------------------------------
 -- PLAYER ONLY FUNCTIONS
@@ -106,7 +106,7 @@ position (Computer a _ _ _) = a
 
 {- direction a
    PRE:           True
-   POST:          The direction of a.
+   POST:          The direction of a
    SIDE EFFECTS:  None
    EXAMPLES:      direction (Player (5, -4) (1, 0) (0, 0) Sprite.player) == (1, 0)
 -}
@@ -170,8 +170,8 @@ pictureFromDirection ((Sprite.Sprite s x):xs) d
 -------------------------------------------
 -- TEST CASES
 -------------------------------------------
-test1, test2, test3, test4, test5, test6, test7, test8, test9, test10, test11, test12, test13 :: Test
-testSuite = TestList [ test1, test2, test3, test4, test5, test6, test7, test8, test9, test10, test11, test12, test13 ]
+test1, test2, test3, test4, test5, test6, test7, test8, test9, test10, test11, test12 :: Test
+testSuite = TestList [ test1, test2, test3, test4, test5, test6, test7, test8, test9, test10, test11, test12 ]
 
 -- createPlayer
 test1 =
@@ -180,7 +180,7 @@ test1 =
     s = Sprite.player
   in
     TestLabel "Create Player Test #1" .
-      TestCase $ assertEqual "" (Player p p p s) (createPlayer p p p s)
+      TestCase $ assertEqual "Should return a new player" (Player p p p s) (createPlayer p p p s)
 -- Directions
 test2 =
   let
@@ -190,7 +190,7 @@ test2 =
     p = createPlayer d d n s
   in
     TestLabel "Directions Test #1" .
-      TestCase $ assertEqual "" ((d, n)) (directions p)
+      TestCase $ assertEqual "Should return directions" ((d, n)) (directions p)
 -- Create AI
 test3 =
   let
@@ -200,47 +200,36 @@ test3 =
     s = Sprite.ai
   in
     TestLabel "Create AI Test #1" .
-      TestCase $ assertEqual "" (Computer p d l s) (createAI p d l s)
+      TestCase $ assertEqual "Should create new AI" (Computer p d l s) (createAI p d l s)
 -- Paths
 test4 =
   let
-    l = [(0,0), (1,1), (2,2)]
-    c = createAI (0,0) (0,0) l []
+    p = [(0,0), (1,1), (2,2)]
+    c = createAI (0,0) (0,0) p []
   in
     TestLabel "Paths Test #1" .
-      TestCase $ assertEqual "" (l) (paths c)
+      TestCase $ assertEqual "Should return paths of AI" (p) (paths c)
 -- Position
 test5 =
   let
     p = (10, 20)
-    d = (1, 0)
-    c = createAI p d [] []
+    c = createAI p (1, 0) [] []
   in
     TestLabel "Position Test #1" .
-      TestCase $ assertEqual "" (p) (position c)
+      TestCase $ assertEqual "Should return position of actor" (p) (position c)
 -- Direction
 test6 =
   let
-    p = (10, 20)
     d = (1, 0)
-    c = createAI p d [] Sprite.ai
+    c = createAI (10, 20) d [] Sprite.ai
   in
     TestLabel "Direction Test #1" .
-      TestCase $ assertEqual "" (d) (direction c)
+      TestCase $ assertEqual "Should return direction of actor" (d) (direction c)
 -- isAI
-test7 =
-  let
-    c = createAI (10, 20) (1, 0) [] []
-  in
-    TestLabel "isAI Test #1" .
-      TestCase $ assertEqual "" (True) (isAI c)
--- isAI
-test8 =
-  let
-    p = createPlayer (0, 0) (1, 0) (0,0) []
-  in
-    TestLabel "isAI Test #1" .
-      TestCase $ assertEqual "" (False) (isAI p)
+test7 = TestLabel "isAI Test #1" .
+          TestCase $ assertBool "Should return true" (isAI (createAI (10, 20) (1, 0) [] []))
+test8 = TestLabel "isAI Test #1" .
+          TestCase $ assertEqual "Should return false" (False) (isAI (createPlayer (0, 0) (1, 0) (0,0) []))
 -- makeMove
 test9 =
   let
@@ -248,21 +237,28 @@ test9 =
     s = (2.4, 2.4)
   in
     TestLabel "Make Move Test #1" .
-      TestCase $ assertEqual "" ((12.4, 5.0)) (position (makeMove s p))
+      TestCase $ assertEqual "Should return new x position" ((12.4, 5.0)) (position (makeMove s p))
 test10 =
   let
     p = createPlayer (-10, 5) (0, -1) (0, 0) []
     s = (2.4, 2.4)
   in
     TestLabel "Make Move Test #1" .
-      TestCase $ assertEqual "" ((-10, 2.6)) (position (makeMove s p))
+      TestCase $ assertEqual "Should return new y position" ((-10, 2.6)) (position (makeMove s p))
+test10b = -- Testing pre condition
+  let
+    p = createPlayer (-10, 5) (0, -1) (0, 0) []
+    s = (0, 0)
+  in
+    TestLabel "Make Move Test #1" .
+      TestCase $ assertEqual "Should return same position" ((-10, 5)) (position (makeMove s p))
 -- sprites
 test11 =
   let
     p = createPlayer (0, 0) (1, 0) (0,0) Sprite.player
   in
     TestLabel "Sprites Test #1" .
-      TestCase $ assertEqual "" (Sprite.player) (sprites p)
+      TestCase $ assertEqual "Should return sprites" (Sprite.player) (sprites p)
 -- getPicture
 test12 =
   let
@@ -270,19 +266,12 @@ test12 =
     (Sprite.Sprite x _) = (Sprite.player !! 1)
   in
     TestLabel "getPicture Test #1" .
-      TestCase $ assertEqual "" (x) (getPicture p)
-test13 =
-  let
-    p = createPlayer (0, 0) (-1, 0) (0, 0) Sprite.player
-    (Sprite.Sprite t _) = head Sprite.player
-  in
-    TestLabel "getPicture Test #2" .
-      TestCase $ assertEqual "" (t) (getPicture p)
+      TestCase $ assertEqual "Should return picture" (x) (getPicture p)
 -- pictureFromDirection
-test14 =
+test13 =
   let
     s = Sprite.player
     (Sprite.Sprite t _) = head Sprite.player
   in
     TestLabel "pictureFromDirection Test #1" .
-      TestCase $ assertEqual "" (t) (pictureFromDirection s (-1,0))
+      TestCase $ assertEqual "Should return picture" (t) (pictureFromDirection s (-1,0))

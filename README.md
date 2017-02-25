@@ -20,7 +20,7 @@ $ cabal run
 Testing requires the packages ``hspec >= 2.4.1`` and ``QuickCheck >= 2.9.2``. Install these before running any tests.
 
 ```bash
-$ cabal test
+$ cabal test --show-detail=always
 ```
 
 ### Authors

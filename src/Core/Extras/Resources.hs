@@ -1,7 +1,5 @@
 module Core.Extras.Resources
-        ( dazzleManRight, dazzleManLeft, monsterRight, monsterLeft
-        , levels, coords )
-where
+        ( dazzleManRight, dazzleManLeft, monsterRight, monsterLeft, levels, coords ) where
 
 import qualified Core.Board.Tile as Tile
 

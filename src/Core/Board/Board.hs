@@ -1,8 +1,11 @@
 module Core.Board.Board
         ( Board, Tiles, createBoard, testSuite ) where
 
+-- Modules for testing
 import Test.HUnit
+-- External modules
 import Data.Array
+-- Internal modules
 import qualified Core.Board.Tile as Tile
 
 -- A board is just an array with Int tuples as keys and a Tile as its elements
@@ -14,13 +17,12 @@ type Tiles = [Tile.Tile]
 
 -- A matrix of tiles
 type Matrix = [Tiles]
-baseWall = Tile.Wall (0,0)
-baseFloor = Tile.Floor (0,0) False
+
 {- createBoard m
    PRE:           Each row in m must have the same number of elements
    POST:          An indexable list with elements from m, where an element's index is the position of the element in m
    SIDE EFFECTS:  None
-   EXAMPLES:      createBoard [ [baseWall, baseWall], [baseFloor, baseWall] ] gives an array with the first element Wall (0,0) at index (0,0), the second element Wall (0,1) at index (0,1), the third element Floor (1,0) at index (1,0) and fourth element Wall (1,1) at index (1,1)
+   EXAMPLES:      createBoard [ [Wall (0,0), Wall (0,0)], [Floor (0,0), Floor (0,0)] ] gives an array with the first element Wall (0,0) at index (0,0), the second element Wall (0,1) at index (0,1), the third element Floor (1,0) at index (1,0) and fourth element Wall (1,1) at index (1,1)
 -}
 createBoard :: Matrix -> Board
 createBoard board =
@@ -34,7 +36,7 @@ createBoard board =
          PRE:           Each row in m must have the same number of elements
          POST:          acc with tiles based on elements in m
          SIDE EFFECTS:  None
-         EXAMPLES:      generateBoard [ [baseWall, baseWall], [baseFloor, baseWall] ] 0 [] == [Wall (0,0), Wall (0,1), Floor (1,0), Wall (1,1)]
+         EXAMPLES:      generateBoard [ [Wall (0,0), Wall (0,0)], [Floor (1,1), Wall (0,0)] ] 0 [] == [Wall (0,0), Wall (0,1), Floor (1,0), Wall (1,1)]
          VARIANT:       |m|
       -}
       generateBoard :: Matrix -> Int -> Tiles -> Tiles
@@ -73,14 +75,17 @@ createBoard board =
 -------------------------------------------
 -- TEST CASES
 -------------------------------------------
-test1 :: Test
-testSuite = TestList [ test1 ]
+test1, test2 :: Test
+testSuite = TestList [ test1, test2 ]
+-- Setups
+baseWall  = Tile.Wall (0,0)
+baseFloor = Tile.Floor (0,0) False
 -- createBoard
 test1 =
-  let
-    baseWall  = Tile.Wall (0,0)
-    baseFloor = Tile.Floor (0,0) False
-    board     = [ [baseWall, baseWall, baseWall], [baseWall, baseFloor, baseWall], [baseWall, baseWall, baseWall] ]
-  in
-    TestLabel "Generate Board Test #1" .
-      TestCase $ assertEqual "" (Tile.Wall (2,2)) ((createBoard board) ! (2, 2))
+  let board = [ [baseWall, baseWall, baseWall], [baseWall, baseFloor, baseWall], [baseWall, baseWall, baseWall] ]
+  in  TestLabel "Generate Board Test #1" .
+        TestCase $ assertEqual "Should return a tile with same position as its index" (Tile.Wall (2,2)) ((createBoard board) ! (2, 2))
+test2 = -- Testing pre condition fail
+  let board = createBoard [[Tile.Wall (0,0)], [Tile.Wall (0,0), Tile.Wall (0,0)]]
+  in TestLabel "Generate Board Test #2" .
+        TestCase $ assertBool "Should return true" ((length board) < 3)

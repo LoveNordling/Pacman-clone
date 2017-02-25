@@ -1,6 +1,5 @@
 module Core.Extras.Common
-        ( Position, setCoordinate, zero )
-where
+        ( Position, setCoordinate, zero ) where
 
 import Graphics.Gloss
 --  Position class is used for Int and Float
@@ -8,15 +7,17 @@ import Graphics.Gloss
 --
 class (Num a) => Position a where
   {- setCoordinate c d t p
-     PRE:       True
-     POST:      p with new coordinates based on c and d t.
-     EXAMPLES:  setCoordinate  ==
+     PRE:           True
+     POST:          p with new coordinates based on c and d t
+     SIDE EFFECTS:  None
+     EXAMPLES:      setCoordinate  ==
   -}
   setCoordinate :: (a, a) -> Int -> Float-> Picture -> Picture
   {- zero p
-     PRE:       True
-     POST:      True if p is (0, 0), otherwise False.
-     EXAMPLES:  zero (0,0) == True
+     PRE:           True
+     POST:          True if p is (0, 0), otherwise False.
+     SIDE EFFECTS:  None
+     EXAMPLES:      zero (0,0) == True
   -}
   zero :: (a, a) -> Bool
 
@@ -24,8 +25,8 @@ instance Position Int where
   zero p = p == (0,0)
   setCoordinate (x, y) d t p  =
     let
-      newY = fromIntegral (y * d) - (fromIntegral d/2) - (t* fromIntegral d) / 2
-      newX = fromIntegral (x * d) - (fromIntegral d/2) - (t* fromIntegral d) / 2
+      newY = fromIntegral (y * d) - (fromIntegral d/2) - (t * fromIntegral d) / 2
+      newX = fromIntegral (x * d) - (fromIntegral d/2) - (t * fromIntegral d) / 2
     in
       translate newX newY p
 
