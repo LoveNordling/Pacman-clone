@@ -32,14 +32,13 @@ initialState :: GameState
 initialState = Splash "Press to Play" (newState (Level.setLevel 0) 0)
 
 {- nextState s
-   PRE:           s should be a State
-   POST:          A new state based on level number s
+   PRE:           True
+   POST:          The next state after s
    SIDE EFFECTS:  None
    EXAMPLES:      nextState (newState (Level.setLevel 0) Sprite.player 0) gives a new State with level 1
 -}
 nextState :: GameState -> GameState
-nextState (State level score _ _) =
-    newState (Level.nextLevel level) 0
+nextState (State level score _ _) = newState (Level.nextLevel level) 0
 nextState (Splash _ state) = state
 
 {- newState (l, p) sc

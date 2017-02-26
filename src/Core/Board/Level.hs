@@ -22,7 +22,7 @@ import qualified Core.Extras.Resources as Resources
   REPRESENTATION INVARIANT:
     The number of treasures on a map must be above 0. The default position of the AI must be valid positions on the board.
 -}
-data Level = Level Board.Board (Float, Float) Int Int
+data Level = Level Board.Board Actor.Position Int Int
            deriving (Eq, Show) -- for testing purposes only
 
 {- nextLevel l
@@ -31,7 +31,7 @@ data Level = Level Board.Board (Float, Float) Int Int
    SIDE EFFECTS:  None
    EXAMPLES:      Calling nextLevel on a level with level number 0 gives a level with number 1
 -}
-nextLevel :: Level -> Maybe (Level, (Float, Float))
+nextLevel :: Level -> Maybe (Level, Actor.Position)
 nextLevel (Level _ _ n _) = setLevel (n+1)
 
 {- setLevel i
@@ -40,7 +40,7 @@ nextLevel (Level _ _ n _) = setLevel (n+1)
    SIDE EFFECTS:  None
    EXAMPLES:      setLevel 0 gives the first level
 -}
-setLevel :: Int -> Maybe (Level, (Float, Float))
+setLevel :: Int -> Maybe (Level, Actor.Position)
 setLevel i
   | (length Resources.levels) - 1 < i = Nothing
   | otherwise =
