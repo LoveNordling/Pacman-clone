@@ -19,7 +19,7 @@ type Tiles = [Tile.Tile]
 type Matrix = [Tiles]
 
 {- createBoard m
-   PRE:           Each row in m must have the same number of elements
+   PRE:           m must be non-empty and each row in m must have the same number of elements
    POST:          An indexable list with elements from m, where an element's index is the position of the element in m
    SIDE EFFECTS:  None
    EXAMPLES:      createBoard [ [Wall (0,0), Wall (0,0)], [Floor (0,0), Floor (0,0)] ] gives an array with the first element Wall (0,0) at index (0,0), the second element Wall (0,1) at index (0,1), the third element Floor (1,0) at index (1,0) and fourth element Wall (1,1) at index (1,1)

@@ -147,7 +147,7 @@ sprites (Computer _ _ _ s) = s
 {- getPicture a d
    PRE:           a must have at least one sprite
    POST:          Image from a that is associated with d
-   SIDE EFFECTS:  None
+   SIDE EFFECTS:  Prints an error message to screen if a has no sprites
    EXAMPLES:      getPicture (Player (0,0) (1, 0) (0,0) Sprite.player) gives the sprite associated with (1, 0)
                   getPicture (Player (0,0) (-1,0) (0,0) Sprite.player) gives the sprite associated with (-1,0)
 -}
@@ -158,7 +158,7 @@ getPicture a = pictureFromDirection (sprites a) (direction a)
 {- pictureFromDirection s d
    PRE:           s must be non-empty
    POST:          Element in s associated with d
-   SIDE EFFECTS:  None
+   SIDE EFFECTS:  Prints an error message to screen if m is empty
    EXAMPLES:      pictureFromDirection Sprite.player (1,0) gives the image object associated with (1, 0)
    VARIANT:       |s|
 -}
