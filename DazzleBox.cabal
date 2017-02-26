@@ -3,7 +3,7 @@
 
 name:                DazzleBox
 version:             0.1.0.0
-synopsis:            A PacMan clone
+synopsis:            A Pac-Man clone
 description:         Like the classic game PacMan, just worse.
 license:             MIT
 license-file:        LICENSE

@@ -131,7 +131,7 @@ moveActors state@(GameState.State l s (Actor.Actors player ai) t)
       where
         (a, b) = Actor.position ai
         (x, y) = Actor.position player
-moveActors state  = state -- On game over!
+moveActors state  = state -- Unnecessary!
 
 {- setMovement s
    PRE:           True
@@ -229,14 +229,12 @@ setPlayerMovement board player
     Actor.createPlayer position nextDirection nextDirection sprites -- fixes 180 movement delay bug.
   | otherwise =
     if (hasReachedDestination playerSpeed position (closestTile position))
-      then
-        Actor.createPlayer position (changePlayerDirection board position direction nextDirection) nextDirection sprites
-      else
-        player
+      then Actor.createPlayer position (changePlayerDirection board position direction nextDirection) nextDirection sprites
+      else player
   where
     (position, (direction, nextDirection), sprites) = (Actor.position player, Actor.directions player, Sprite.player)
     {- setPlayerDirection b p d nd
-       PRE:           p, p + d and p + nd must be valid coordinates in b
+       PRE:           p, p + d and p + nd must be coordinates in b
        POST:          nd if the approximation of p + nd will produce a valid move in b, d if the approximation of p + d is a valid move in b. Otherwise (0,0)
        SIDE EFFECTS:  Prints an error to the screen in p, or the sum of p and d or nd is not valid coordinates in b
        EXAMPLES:      changePlayerDirection (Board.createBoard (Resources.levels !! 0)) (1,1) (0,1) (1,0) == (1,0)

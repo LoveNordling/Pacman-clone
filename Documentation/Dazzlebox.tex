@@ -1,0 +1,649 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\setcounter{secnumdepth} {5}
+\setcounter{tocdepth}{5}
+
+\begin{document}
+\title{DazzleBox}
+\author{Love Nordling, Ardalan Samimi, Ulf Sigvardsson}
+\maketitle
+\begin{abstract}
+One of the earliest and greatest commercial successes in arcade gaming history is 1980's PacMan, developed in C by Toru Iwatani. This paper covers the creation of a similar computer game with a functional approach.
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+
+\section{Introduction and purpose}
+In the field of computer gaming, one of the most recognized arcade games of all time is 1980's Pac-Man, developed by Toru Iwatani. The object of the game is to navigate through a maze, collecting pellets (Pac-dots) whilst avoiding four computer controlled "ghosts". If any of the ghosts reaches the player, the game is over. If the player is successful in collecting all pellets without being caught, the player wins. \\
+		\newline
+Over the playing board, various "power ups" are distributed. When the player collects any of these items, the ghosts cease to chase the player for a brief period and instead begin to avoid it. During this time the player can eat the ghosts for extra points which in turn prompts the eaten ghost to return to a center point to respawn.\\
+		\newline
+In order to expand their understanding of functional programming and how to implement a game in such an environment, the authors of this report decided to create a game, heavily inspired by Pac-Man, in Haskell.
+
+	\subsection{Summary}
+	The program tasks the user to navigate through a maze-like board with the objective of collecting treasures. The user controls its character by input from the arrow keys. Similarly to the original Pac-Man, the player is being chased by a computer opponent. If all treasures are collected before the player is caught by the computer, the player wins. Unlike the original, this game does not support any power ups and its sole focus is on collecting the treasures and avoiding the computer whilst doing so.\\
+		\newline
+	The game is rendered on the screen in a separate window using the \texttt{Gloss}-library which is a rudimentary tool for rendering graphics in Haskell.\\
+		\newline
+	The algorithm used for simulating the computer chasing the player is called A* (pronounced "A-star"). This algorithm evaluates all available paths on the board 	 originating from its current position and act upon one that reaches its goal, in this case: the player.
+		\newpage
+
+\section{Use cases}
+This section will cover how to play the game. Before being able to actually run the program, the user is required to install a set of packages that are used by the game, described in the next section.
+
+	\subsection{Dependencies}
+	The game uses a set of packages that needs to be 		installed on the machine running it.
+	In its current form, the user also needs to install the package \texttt{HSpec}, which is a testing framework. This would not be a part of the release version.\\
+		\newline
+	Firstly, the user needs the \texttt{Gloss}-library, which can either be installed globally or locally in a sandboxed environment using the Haskell platform's default package installer \texttt{Cabal}. Below follows 	a description on how to install it locally.\\
+		\newline
+	In the root directory of the project, the following commands should be executed in the terminal:\\
+
+    \begin{lstlisting}[language=Bash]
+   $ cabal sandbox init
+   $ cabal install gloss==1.10.*
+   $ cabal install gloss-juicy
+   $ cabal install hspec==2.4.1
+   $ cabal install hspec-contrib
+   \end{lstlisting}
+
+   This will create a sandbox environment in that folder and also install the dependencies. Make sure that you also have GHC base package version 4.8 or above installed.
+
+	\subsection{Gameplay instructions}
+	This section instructs the reader on how to launch and play the game.
+
+		\subsubsection{Running the game}
+		The game is run by navigating to the project root folder in the terminal, and then typing:\\
+
+   \begin{lstlisting}[language=Bash]
+   $ cabal run
+   \end{lstlisting}
+
+   		\subsubsection{Gameplay}
+   		At the start of each level, the player spawns in a maze with various amounts of treasures scattered across the map. One computer opponent is initially in pursuit and every few seconds an additional one spawns until there is a total of five opponents on the screen. If the player is successful in collecting all the treasures without being caught by the computer the game advances to the next level or, in the event of being killed, restarts.\\
+   			\newline
+		The user navigates using the arrow keys. If an arrow is pressed in a direction where no opening exists the game will act on this command upon the next available opportunity unless another arrow key is pressed within that time span.\\
+\begin{figure}
+\centering
+\includegraphics[scale=0.3]{pic1.png}
+\caption{A frame of the first level}
+\end{figure}
+\section{Documentation}
+This section covers in greater detail the implementation specifics of the game. Data structures, central algorithms and some of the more important functions are presented here.
+
+	\subsection{Data Structure}
+    The program uses several data structures to represent for example the player, AI, map and state of the game. These are: \texttt{GameState}, \texttt{Tile}, \texttt{Actors}, \texttt{Actor}, \texttt{Level} and \texttt{Sprite}.
+
+    	\subsubsection{Tile}
+    	The data type \texttt{Tile} is used to represent the different elements of the level map and offers two constructors, \texttt{Floor} and \texttt{Wall}, as illustrated below:\\
+
+   \begin{verbatim}
+   data Tile = Floor (Int, Int) Treasure | Wall (Int, Int)
+   type Treasure = Bool
+   \end{verbatim}
+
+        \noindent These two constructors together make up the components of a map that is drawn on the screen. \\
+		\newline
+		A \texttt{Floor} takes two arguments. The first is a pair of integers that represents the coordinates of the floor tile on the board. The second argument, \texttt{Treasure}, is a type synonym for \texttt{Bool}) and indicates the presence of a "treasure" on the tile, i.e. a pellet the user must collect in order to win.\\
+		\newline
+		A \texttt{Wall} is as the name suggest a wall which the user and AI cannot move through, and takes just one argument: the coordinates of the wall in the form of a pair of integers.
+    	\newline
+    	\textbf{3.1.1.1 Interface} \\
+    	\newline
+		Although \texttt{Tile} is not an abstract data type, it does provide an interface that is used throughout the program and consists of the following functions:\\
+
+   		\begin{verbatim}
+   		position :: Tile -> (Int, Int)
+   		setPosition :: Tile -> Int -> Int -> Tile
+   		hasTreasure :: Tile -> Bool
+   		\end{verbatim}
+
+    	\noindent The function \texttt{position} simply returns the position of the tile, while \texttt{setPosition} returns the same \texttt{Tile} with the \texttt{Int} arguments as its new position. The third function \texttt{hasTreasure} returns either \texttt{True} or \texttt{False} depending on if the tile contains a treasure.
+
+        \subsubsection{Actor}
+    	\texttt{Actor} is an abstract data type that represents the different characters of the game, with the constructors \texttt{Player} and \texttt{Computer}:
+
+   \begin{verbatim}
+   data Actor = Player Position Direction Direction Sprite.Sprites
+              | Computer Position Direction Paths Sprite.Sprites
+   type Score = Int
+   type Paths = [(Int, Int)]
+   type Direction = (Float, Float)
+   \end{verbatim}
+
+    	\noindent The first two arguments, \texttt{Position} and \texttt{Direction}, are the position and the direction of motion of the entities and are present in both constructors.\\
+		\newline
+		The position of an actor is represented by a \texttt{Float} tuple, unlike the \texttt{Tile} data type described above, which uses \texttt{Int}. This is necessary in order to achieve smooth movement for the actors, as they should be able to be drawn on the screen in between two tiles by the graphics engine. The use of integers would limit movement to steps of one tile at a time.\\
+		\newline
+		Likewise, the second argument of \texttt{Player} and \texttt{Computer} is a \texttt{Float} tuple, which holds the direction the actor is currently moving in.\\
+		\newline
+    	The player also has a third argument of type \texttt{Direction}. This represents the direction the player will move in, once having the opportunity to do so. For example: if the user is moving through a corridor with no available path upwards but presses the up arrow, the character will turn upwards as soon as there is an opening in that direction. This behavior mimic that of the original Pac-Man.\\
+		\newline
+		The third argument of the \texttt{Computer} constructor is a list of \texttt{Int} tuples that holds the nearest path to the player in the form of a list of coordinates, retrieved from the A* algorithm. The AI moves according to these coordinates. \\
+		\newline
+    	The fourth argument of \texttt{Player} and \texttt{Computer}, \texttt{Sprite.Sprites}, is a list of the data type \texttt{Sprite}, which represents the different images of the characters displayed on screen. \texttt{Sprite} is described in greater detail in section 3.1.7. \\
+		\newline
+        The invariant of \texttt{Actor} state that the position of the actor must be valid coordinates for the level they are occupying, and that the directions can only be one of four values: (-1,0), (0,-1), (0,0), (1,0) or (0,1). \\
+        \newline
+		\textbf{3.1.2.1 Interface} \\
+    	\newline
+    	The interface of \texttt{Actor} consist of a range of different functions, though not all of them are common between the two constructors. That is: some functions only returns reasonable results for one of the constructors.\\
+	    \newline
+        The common functions, that can be called with both the \texttt{Player} and \texttt{Computer} constructors, are listed below: \\
+
+   \begin{verbatim}
+   position :: Actor -> (Float, Float)
+   direction :: Actor -> Direction
+   sprites :: Actor -> Sprite.Sprites
+   getPicture :: Actor -> Picture
+   isAI :: Actor -> Bool
+   makeMove :: (Float, Float) -> Actor -> Actor
+   \end{verbatim}
+
+		\noindent The functions \texttt{position} and \texttt{direction} returns the position and 	direction, respectively, of the actor passed to the function, while \texttt{sprites} returns the list of sprites used by this actor. \\
+    	\newline
+        To retrieve a specific sprite as a Picture (which is a data type provided by the graphics library \texttt{Gloss} used to represent 2D images displayed on screen), the function \texttt{getPicture} is used. The picture returned depends on the current direction of the inputed actor. \\
+    	\newline
+    	Due to the abstract nature of \texttt{Actor}, the interface also provides a way to determine whether an actor is an AI or not. The function \texttt{isAI} will return \texttt{True} if this is the case and otherwise \texttt{False}. \\
+	    \newline
+    	To calculate the new position of an actor, the function \texttt{makeMove} is used. This function returns the inputed actor, with new position coordinates based on its current position, the direction and the inputed speed of the character.\\
+    	\newline
+    	The interface also provides a set of functions exclusively for either \texttt{Player} or \texttt{Computer}. Below are the \texttt{Player} specific functions: \\
+
+   \begin{verbatim}
+createPlayer :: (Float, Float) -> Direction -> Direction -> Sprite.Sprites -> Actor
+directions :: Actor -> (Direction, Direction)
+   \end{verbatim}
+
+    	\noindent The function \texttt{createPlayer} is used to create a new player character based on the inputed arguments. The first argument will be the position of the \texttt{Player} returned. The second argument is the current direction, and the third is the next, desired direction. The last argument is a list of sprites. \\
+    	\newline
+    	The second function \texttt{directions} returns the two \texttt{Directions} arguments of the \texttt{Player} inputed. \\
+    	\newline
+    	The \texttt{Computer} specific functions are: \\
+
+   \begin{verbatim}
+createAI :: (Float, Float) -> Direction -> Paths -> Sprite.Sprites -> Actor
+paths :: Actor -> Paths
+   \end{verbatim}
+
+    	\noindent A \texttt{Computer} entity is constructed using \texttt{createAI}, which takes as its first argument a pair of \texttt{Float} values representing the initial position of the \texttt{Computer}, followed by the current direction, a list of pairs of integers which is the path it should take, and a list of sprites. \\
+    	\newline
+        The function \texttt{path} simply returns the list of paths of a \texttt{Computer}.
+    	\subsubsection{Actors}
+    	The data type \texttt{Actors} is used to hold the current characters in a game: \\
+
+   \begin{verbatim}
+   data Actors = Actors Actor [Actor]
+   \end{verbatim}
+
+   		\noindent The first argument of \texttt{Actors} is an \texttt{Actor}. This should, according to the invariant, always be a \texttt{Player}. The second argument is a list of the same type, and should always consist of \texttt{Computer}.
+
+    	\subsubsection{GameState}
+    Creating a Game in Haskell is a challenge, considering the stateless nature of functional programming. To keep track of the state, the data type \texttt{GameState} was introduced: \\
+
+   \begin{verbatim}
+   data GameState = State Level.Level Score Actor.Actors Float
+                  | Splash String GameState
+   -- Represents the score of the player
+   type Score = Int
+   \end{verbatim}
+
+    	\noindent This data type consist of two constructors. The constructor \texttt{State} takes the current level in the form of \texttt{Level} (described in Section XXX), the score of the player, the entities on the board, in the form \texttt{Actors} (described in section 3.1.3), and the next spawn time of the AIs. \\
+    	\newline
+    	The \texttt{Splash} constructor is used to represent a splash screen (i.e. a screen with just text). It's first argument is the text to be displayed, and the second argument is another \texttt{GameState}, which is the next state of the game. This can be either another splash screen, or a \texttt{State} consisting of, for example, the next level.\\
+    	\newline
+    	By passing this data type between functions the game is allowed to keep track of itself as the parameters change.\\
+        \newline
+    	\textbf{3.1.4.1 Interface} \\
+        \newline
+        \texttt{GameState} is not an abstract data type, but does provide two functions to simplify the creation of a state: \\
+
+   \begin{verbatim}
+   nextState :: GameState -> GameState
+   newState :: Maybe (Level.Level, Actor.Position) -> Score -> GameState
+   \end{verbatim}
+
+   		\noindent The function \texttt{nextState} will return the next state of the state inputed. The function \texttt{newState} will construct a new state based on the arguments. The first argument is a tuple consisting of a \texttt{Level} and the initial position of the player on that level. This argument is an optional, meaning that it can also be \texttt{Nothing}. The next argument is the current score of the player.
+
+        \subsubsection{Level}
+        A level is represented by the data type \texttt{Level}: \\
+   \begin{verbatim}
+   data Level = Level Board.Board (Float, Float) Int Int
+   \end{verbatim}
+        \noindent This data type holds the current map in the form of a Board (a type synonym, described in section 3.1.6, for an array with pairs of integers as its keys with values of type \texttt{Tile}), the spawn position of the AIs on that level, the level number and the number of treasures the player must collect in order to advance to the next level. \\
+        \newline
+        The invariant of \texttt{Level} state that the integer value that represents the number of treasures on the board must be greater than zero. Furthermore, the spawn position of the AI must be valid coordinates on the board, nor should the level hold a board with overlapping tiles. \\
+        \newline
+        \textbf{3.1.5.1 Interface}\\
+        \newline
+        As \texttt{Level} is an abstract data type, the following functions are provided to create, manipulate or retrieve the different arguments of this data type: \\
+
+   \begin{verbatim}
+   getBoard :: Level -> Board.Board
+   getLevelNumber :: Level -> Int
+   getGoal :: Level -> Int
+   spawnPosition :: Level -> (Float, Float)
+   nextLevel :: Level -> Maybe (Level, Actor.Position)
+   setLevel :: Int -> Maybe (Level, Actor.Position)
+   checkForTreasure :: Level -> (Int, Int) -> Maybe Level
+   \end{verbatim}
+        \noindent The first four functions takes a \texttt{Level} as argument, and simply returns the board, the level number, the level goal and the AI spawn position, respectively, of that level. The function \texttt{nextLevel} returns the level following the one inputed as an optional, meaning that it could also be \texttt{Nothing} if there are no more levels. This function is dependent on the \texttt{setLevel} function, that takes an integer and returns a \texttt{Maybe} encapsulating a tuple consisting of a \texttt{level} and the player's initial position on that level. \\
+        \newline
+        The last function, \texttt{checkForTresure}, which takes a \texttt{Level} and a pair of integers, will check if there is a treasure on the tile with the position inputed as the second argument. If that is the case, the board of \texttt{Level} returned will be modified so that the the treasure is removed, otherwise it will return \texttt{Nothing}.
+    	\subsubsection{Board}
+		While \texttt{Board} is not an actual data type, but instead a type synonym, it is worth mentioning it as it is used throughout the program. \\
+        \newline
+        A \texttt{Board} is a type synonym for an array with a pair of integers as index keys that holds values of type \texttt{Tile} (described in section 3.1.1), and is used to hold the information of the current board: \\
+
+   \begin{verbatim}
+   type Board = Array (Int, Int) Tile.Tile
+   \end{verbatim}
+
+        \noindent The index of a tile in the array is determined by the tiles position. For example, the element \texttt{Wall (0,5)} would be found at index \texttt{(0,5)} in the array. This is one reason that two tiles should not have the same positions. \\
+       	\newline
+    	\textbf{3.1.6.1 Functions} \\
+        \newline
+        A \texttt{Board} can be constructed using the function \texttt{createBoard} which takes a \texttt{Matrix} (a list of lists of \texttt{Tiles}) and returns a \texttt{Board} with the element's indices corresponding to their position in the matrix inputed. The function signature is defined: \\
+
+   \begin{verbatim}
+   createBoard :: Matrix -> Board
+   \end{verbatim}
+    	\subsubsection{Sprite}
+    	The \texttt{Sprite} data type represents the different 2D images of a character and is defined: \\
+   \begin{verbatim}
+   data Sprite = Sprite Picture (Float, Float)
+   type Sprites = [Sprite]
+   \end{verbatim}
+
+    	\noindent The first argument of a \texttt{Sprite} is a \texttt{Picture}, a data type provided and used by \texttt{Gloss} for rendering 2D images and shapes, and a pair of floating point numbers used to associate the image with a direction. This pair must, according to the invariant, be either \texttt{(-1,0)} or \texttt{(1,0)}, which is the left or right direction. \\
+        \newline
+        This approach allows the program to switch between images when the user switches direction. \\
+        \newline
+        \textbf{3.1.7.1 Interface} \\
+        \newline
+        The \texttt{Sprite} data type offers only one function:
+   \begin{verbatim}
+   load :: [((Float, Float), String)] -> Sprites
+   \end{verbatim}
+        This functions takes a list of tuples consisting of a pair of floating point numbers and a \texttt{String} containing the file path to a \texttt{PNG} image. The image at the location provided will be associated with the pair of floating point numbers in the \texttt{Sprite} returned.
+    \subsection{Algorithms used}
+    In this section, a selection of algorithms considered paramount to the game, such as path finding and movement, is presented.
+		\subsubsection{AI Pathfinding}
+        The algorithm used for computer navigation is known as the A* (pronounced A-star) search algorithm. This algorithm searches through an environment, e.g. a graph consisting of vertices and edges, looking for the path to a goal with the lowest travel cost.
+        This travel cost consists of the approximated distance from a vertex to the goal, together with the cost to reach said vertex from the starting point. The steps of the algorithm are:
+\begin{enumerate}
+\item If any path in the current list of paths contains the goal, return that path.
+\item Otherwise: From the last element of the first path in the list, for all connected nodes that do not already appear in the list, insert the current path followed by that node into the list and remove the current path.
+\item Sort the queue so that the path with the lowest approximated total cost is the first element.
+\item Repeat step 1.
+\end{enumerate}
+
+\noindent The algorithm will evaluate all vertices connected to the current one, queue all vertices that do not already appear in the queue with the current path and proceed with the vertex in the resulting queue with the lowest total cost. Thus, if a path that initially seemed promising eventually becomes too expensive, the algorithm will at a certain point switch to an earlier path with a lower approximated cost.\\
+        \newline
+To clarify: a vertex with total cost of 4 will be investigated before one with a total cost of 6, but after traveling 3 steps in this direction without reaching its goal due to unforeseen obstacles, this path now holds a total cost of, say, 7. At that point it is superfluous to continue traversing this path before investigating the one with a cost of 6.\\
+        \newline
+When the goal node is reached, the algorithm has finished and returns the current path. The game defines the cost of traveling from one tile to another as one unit.\\
+		\newline
+Note that this algorithm is not verbatim to the usual definition for A* but rather a customized one in order to suit a functional programming language.
+
+        \subsubsection{Smooth Movement}
+        One of the challenges during the development stage was finding a way achieve smooth movement for the actors, rather than having the entities jump from tile to tile. \\
+        \newline
+        To accomplish this, it was assumed that if an actor is in motion between two tiles then, by the rules of movement on the board, no wall is present at the destination. Thus, when an actor is between two tiles, there is no need to perform a collision detection until they have reached the center of the destination tile. At this point, a new check will be performed to determine which direction the actor should be moving next. \\
+        \newline
+        Since the game simulation is discrete there is a risk of the actor moving over the center of a tile between time steps, thus making the game not register the event. In order to counter such an error, the player's position is checked each frame to see if it is close enough to the center of the tile, at which point the player is considered to have reached its destination, which is defined to be any distance from the center of a tile that is less than the distance the actor moves each frame. \\
+        \newline
+		\todo{Skrivit om denna del ovan. Se över/Ta bort detta!}\textbf{TIDIGARE:} A goal for this project was to allow for the actors to not simply jump from tile to tile but rather move smoothly in between tiles. To accomplish this it was assumed that if an actor is moving in between two tiles then, by the rules of movement on the board, no wall is present at the destination.\\
+            Thus, when an actor is between two tiles there is no need for any collision detection until it reaches the center of the destination tile. At this point a new check will be performed based on whether the actor is a player or a computer to determine which direction the actor should be moving next.
+
+            Since the game simulation is discrete there is a big risk of the actor moving over a tile center between time steps, thus making the game not register the event. In order to counter such an error the player position is checked each frame to see if it is reasonable close enough to the tile center at which point the player is declared to has reached its destination. This is defined to be any distance from the tile center that is less than the distance the actor moves each frame.
+
+  		\subsubsection{Player Movement}
+        The player's movement is decided by two factors. Firstly, the game registers when a key is pressed on the keyboard by the user to control the character. If a relevant key, i.e. an arrow key, is pressed, the character's \textit{desired} direction of movement will be updated. Note that the desired direction differs from the actual direction of movement: In order to avoid the player moving orthogonal to its current direction of movement when in between two tiles, the direction the player wants to move in is tracked, to be used once the player has reached the center of a tile. However, if the desired direction is the opposite of the current direction, the change will occur instantly, rather than after the player having reached the center of a tile, which would cause a small delay. \\
+        \newline
+        The second deciding factor \todo{SE ÖVER!}(Kan man säga så?) of the player's movement is whether they are at the center of a tile and if it is possible to move in the desired direction. The algorithm prioritizes the desired direction over the current direction, and will therefore first evaluate the next tile in the desired direction to determine if it is a valid tile to move to. If that is the case, the player's current direction will be updated. Otherwise, the next tile in the current direction will be evaluated. If the path forward is clear for the player, they will continue to move in that direction. Otherwise, in the case of a wall on that position, the player will stop moving. \\
+        \newline
+
+		\todo{Skrivit om denna del ovan. Se över/Ta bort detta!}\textbf{TIDIGARE:} Where the player moves is decided by two checks, the first one being a check of keys pressed on the keyboard to decide where the player wants to move. This is performed for each frame and if a relevant key is pressed, the direction of desired movement is updated. Note that the direction of desired movement differs from the direction of movement. In order to avoid the player moving orthogonal to its current direction of movement when in between two tiles, the direction of where the player wants to move is tracked to be used once it reaches a tile center. However, if the desired direction is the opposite of the current direction the change is instant.
+
+The second check is a check to see if the player is on a tile and, if they are, make a check on where the player can move.
+The second check determines if the player is indeed on a tile center and if is possible to move in the desired direction. The game prioritizes to check if the player can move in the desired direction over the current one. It performs this check by evaluating if the next tile in the desired direction is a Floor and if so moves in this direction. If not, the same check is performed but in the current direction. If the way is clear the player continue to move in that direction and otherwise stops as there is now a wall in the way.
+
+        \subsubsection{AI Movement}
+        The movement of the AIs differs slightly from the player movement. While the latter algorithm computes a new direction of movement when the player is passing over a tile, the AI movement is first decided after it has reached the next tile its supposed to move to, retrieved from the path finding algorithm. However, there is an exception: If the AI is either standing still, or if it does not already have a path to move in, a new movement direction along with a path will be calculated by the path finding algorithm. \\
+        \newline
+        The next direction of movement is calculated by subtracting the AIs current position from the coordinates of the next tile in its path, resulting in a unit vector. For example, if an AI is positioned at \texttt{(2,1)} and the next coordinate in its path is \texttt{(1,1)}, the calculation would yield \texttt{(-1,0)}, which corresponds to a move in the left direction. \\
+        \newline
+        \todo{Skrivit om denna del ovan. Se över/Ta bort detta!}\textbf{TIDIGARE:} Unlike for player movement the AI does not compute a new direction of movement when passing over any tile. Instead it only does so when reaching the next tile that its path finding algorithm has decided. However there is one exceptions. A new movement direction is calculated if the computer is either standing still or if it does not already have a path.
+
+When computing the next direction of movement the coordinates of the AI's current position is subtracted from the coordinates of the next tile in its path. The result of this is a unit vector that is the new direction of movement for the computer.
+
+    	\subsubsection{Rendering}
+        In order to be able to show the current state of the game (i.e. the player and the AIs moving on the board), it is necessary to convert the board and the characters into a format that the library \texttt{Gloss} can use to render it into 2D images displayed on the screen. \\
+
+        \paragraph{converting coordinates}
+
+        The coordinate system used for rendering is similar to that of a normal window coordinate system with an x (horizontal axis) and y coordinate (vertical axis) and with the center of the window being the origin. However the coordinates that are stored in each tile differ from the rendering coordinates. Instead of the origin being in the center of the board it starts in the left down corner. Instead of representing coordinates of pixels it represents only the numerical position on the board. Therefor  a conversion must take place before the coordinate of an object on the board can be used for rendering.
+\newline
+This conversion is made using the following formula:
+
+\begin{eqnarray}
+	x' = d(x - \frac{1}{2} - \frac{t}{2})
+\end{eqnarray}
+	Where x is the coordinate stored in the tile, d is the width of a tile in pixels, t is the amount of tiles in one row and x' is the coordinate of the pixel in the center of the tile.
+
+	We chose to use x' as the center of the tile because. \\
+\paragraph{Rendering Tiles}
+	To render the polygon and lines for a tile one needs the coordinates of every corner. We achieve this using the coordinate of where the center of the tile is supposed to be rendered and the thickness of it in pixels. With these two we can know where the corners must be by adding or subtracting half of the tile width. \\
+
+\paragraph{Rendering Actors}
+
+    	\subsection{Modules}
+        This section covers in detail the most important modules used in the game and its code.
+        \subsubsection{Main}
+        The \texttt{Main} module consists of three functions:
+        \begin{verbatim}
+window :: Display
+window = InWindow "DazzleBox" (1000, 1000) (0, 0)
+
+backgroundColor :: Color
+backgroundColor = black
+
+main :: IO ()
+main = play window backgroundColor GameEngine.fps
+       GameState.initialState GraphicsEngine.render
+       GameEngine.handleKeyEvents GameEngine.step
+        \end{verbatim}
+
+		\noindent The \texttt{main} function is the first function to be called when the program executes, and will in turn call the \texttt{play} function (provided by \texttt{Gloss}-library), which allows for, amongst other things, custom event handling in a simulation. \\
+        \newline
+        This function is passed as arguments a window in which to display the game, its background color,  \texttt{GameEngine.fps}, which is an integer representing the number of times to update the screen each second, and \texttt{GameState.initialState}, which is the default state the game will start in. Furthermore, \texttt{play} also takes three callback functions:
+        \begin{enumerate}
+        \item \texttt{GraphicsEngine.render}: A function that converts the state into a \texttt{Picture}.
+        \item \texttt{GameEngine.handleKeyEvents}: A function that handles input events.
+        \item \texttt{GameEngine.step}: A function that should update the state one step.
+        \end{enumerate}
+
+		\noindent It is these three functions that are essentially responsible for anything to happen and will be described in the following sections.
+        \subsubsection{GameEngine}
+        This section covers some of the central functions of the \texttt{GameEngine} module.
+        \paragraph{step}
+        \begin{verbatim}
+step :: Float -> GameState -> GameState
+step _ state@(Splash _ _) = state
+step _ state              = moveActors (setMovement state)
+        \end{verbatim}
+
+        \noindent The \texttt{step} function, invoked by the \texttt{play} function of the \texttt{Gloss}-library 60 times a second, is responsible for updating the state of the game. \\
+        \newline
+        It is passed a floating point number, representing the number of seconds since last updated, and the current state. If the game state is a splash screen, it will be returned unmodified. Otherwise, the function \texttt{setMovement}, which will set the movements of all the actors during one update, will be invoked with the current state. The result of this function will then be passed to \texttt{moveActors}, described below.
+\newline
+\paragraph{moveActors}
+\begin{verbatim}
+moveActors :: GameState -> GameState
+moveActors state@(State l s (Actor.Actors player ai) t)
+  | levelGoal <= s = Splash "Level done!" (nextState state)
+  | otherwise      =
+    if newAI `caughtPlayer` newPlayer
+      then Splash "Game Over!" initialState
+      else State level score (Actor.Actors newPlayer newAI) t
+  where
+    levelGoal      = Level.getGoal l
+    newAI          = map (Actor.makeMove aiSpeed) ai
+    newPlayer      = Actor.makeMove playerSpeed player
+    (level, score) =
+       case Level.checkForTreasure l (closestTile (Actor.position newPlayer)) of
+          Just l' -> (l', s + 1)
+          Nothing -> (l, s)
+\end{verbatim}
+		The \texttt{moveActors} function is responsible for changing the position of the actors in the state, but also to evaluate whether the player has reached the level goal or if the AI has caught the player. \\
+		\newline
+        In the above code fragment, the argument \texttt{s} represents the players current score. If the first guard statement evaluates to true, meaning that the player's current score is greater than or equal to the level requirements, then the function will return as the new state a \texttt{Splash} informing the user that the level is complete, along with the next stage, which is either a new level or, if there are no more levels, a new \texttt{Splash} with a victory message. \\
+        \newline
+        If the player has not yet reached the level requirements, the function will proceed by first setting the AIs' and the player's new positions (by invoking the function \texttt{Actor.makeMove} described in section 3.2.1.1), and then checking if the AIs in their new position has caught up with the player. This check is performed by the helper function \texttt{caughtPlayer}: \\
+
+\begin{verbatim}
+caughtPlayer :: [Actor.Actor] -> Actor.Actor -> Bool
+caughtPlayer []            _ = False
+caughtPlayer (ai:ais) player = (abs (x-a) < 0.5 && abs (y-b) < 0.5)
+                            || ais `caughtPlayer` player
+   where
+      (a, b) = Actor.position ai
+      (x, y) = Actor.position player
+\end{verbatim}
+
+		\noindent\texttt{caughtPlayer} will map over a list of AIs to check if the distance between the first AI in the remaining list is within 0.5 "tile sizes", i.e. if the AI is overlapping the player by at least half a tile. If this is not the case, the function will continue by mapping over the tail of the list until it reaches its edge condition, an empty list. \\
+        \newline
+        If the function \texttt{caughtPlayer} evaluates to \texttt{True}, the \texttt{moveActors} function will return a \texttt{Splash} with the "Game Over" message and the initial state as its arguments. \\
+        \newline
+        Otherwise, the return value will be essentially the same state as inputed, but with the position of the actors updated. The function also checks if the player is about to move over a tile with a treasure on it. If that is the case, the score of the player will increment by one, while the level passed along with the new state will be modified (by the \texttt{checkForTreasures} function described in section 3.1.5.1) so that the tile no longer holds a treasure. Otherwise, the same exact level and score will be passed with the new state.
+			\paragraph{setMovement}
+            \begin{verbatim}
+setMovement :: GameState -> GameState
+setMovement (State level s (Actor.Actors player ai) t) =
+   let
+     board       = Level.getBoard level
+     (newAI, t') = spawnAI level (t + timeStep) ai
+  in
+    State level s (Actor.Actors (setPlayerMovement board player)
+    (setAIMovements board player newAI)) t'
+            \end{verbatim}
+            While the name of the function might indicate that it is \texttt{setMovement} updates the positions of the actors, in reality, this function updates the conditions of the next movement of the actors, i.e. the direction of movement. \\
+            \newline
+			Though, \texttt{setMovement} is also responsible for spawning new AIs and invokes the helper function \texttt{spawnAI} (omitted here), which is tasked with creating new AIs at a set time and to a certain limit. In the second argument passed to the helper function, \texttt{t} represents the time passed since the last spawn and is increased each frame by \texttt{timeStep}, which is defined: \[\frac{1}{\textit{frames per second}}\]
+            Together with a limit on the number of AIs that should be present during one level (currently set to 5), the game can thus keep track of when to spawn new opponents and when to not.
+			\\
+            \newline
+            The return value of \texttt{setMovement} will be essentially the same state but with the actors having their directions updated, by the functions \texttt{setPlayerMovement} and \textbf{setAIMovements}.
+			\paragraph{setAIMovements}\todo{Se över!}
+            The \texttt{setAIMovements} function uses several helper functions, that will for the sake of readability be split into several parts and explained separately, beginning with the main function:
+\begin{verbatim}
+setAIMovements :: Board.Board -> Actor.Actor -> [Actor.Actor] -> [Actor.Actor]
+setAIMovements _ _    [] = []
+setAIMovements board p c = map (setAIMovement board (Actor.position p)) c
+  where
+  	(...)
+\end{verbatim}
+\textbf{setAIMovements} takes a \texttt{Board}, an \texttt{Actor} and a list of \texttt{Actors}. The first \texttt{Actor} argument is the player entity, while the list of actors are the AIs.
+\texttt{setAIMovements} returns a list of actors by mapping the helper function \texttt{setAIMovement} applied to the player position and the board over all computer actors in the input list. This helper function returns a computer with its new direction of movement depending on its position and the path returned from \texttt{calculateAIMovement}. In this example the function call to \texttt{calculateAIMovement} has been replaced by "\texttt{(..)}" for readability but its purpose is to calculate the path to the player by passing the position of the computer, the player position and the current board to \texttt{aStar}.
+
+The helper function responsible for
+%The function also calls \texttt{changeAIDirection}
+
+
+\paragraph{setPlayerMovement}
+\begin{verbatim}
+setPlayerMovement :: Board.Board -> Actor.Actor -> Actor.Actor
+setPlayerMovement board player
+  | Common.zero direction && Common.zero nextDirection = player
+  | Common.zero (direction + nextDirection) =
+    Actor.createPlayer position nextDirection nextDirection sprites
+  | otherwise =
+   if (hasReachedDestination playerSpeed position (closestTile position))
+     then
+      Actor.createPlayer position (...) nextDirection sprites
+      else
+        player
+\end{verbatim}
+This function is responsible for setting the direction of movement of the player. It returns a player with the appropriate direction depending on the the board, her position, current direction as well as  wanted direction of movement. Just like with \texttt{calculateAIMovement} the helper function \texttt{changePlayerDirection} has been replaced by "\texttt{(...)}" for the case of readability and is in charge of changing the direction of movement once the player has reached the center of a tile. Both \texttt{setPlayerMovement} and \texttt{setAIMovement} use \texttt{hasReachedDestination} to approximate the if the actor has reached a tile.
+
+
+
+        \subsubsection{GraphicsEngine}
+        This section cover some of the central functions in the \texttt{GraphicsEngine} module.
+        \paragraph{render}
+        Rendering 2D images and shapes, i.e. the map and the characters, to the screen is done using the external library \texttt{Gloss}, which provides the function \texttt{play} that takes as one of several arguments, a callback function that should convert the current state into a \texttt{Picture}. This is done by the function \texttt{render}, detailed below:
+        \begin{verbatim}
+render :: GameState.GameState -> Picture
+render (GameState.State l _ (Actor.Actors p c) _) = drawMap (Level.getBoard l) p c
+render (GameState.Splash s _) 					  = drawText s
+        \end{verbatim}
+The function takes a \texttt{GameState} as argument and returns a \texttt{Picture}. If the game state is anything other than a \texttt{Splash} the function \texttt{drawMap} is invoked, with the board corresponding to the current level,  the player and AIs passed along as arguments. \texttt{drawMap} then returns a picture that mirrors the state of these arguments.
+        \paragraph{drawMap}
+        \begin{verbatim}
+drawMap :: Board.Board->Actor.Actor->[Actor.Actor]->Float->Picture
+drawMap b p cs time =
+  let
+    board      = elems b
+    dimensions = tileSize b
+    interior   = drawInterior board dimensions []
+    character  = [drawActor dimensions time p]
+    computer   = map (drawActor dimensions time) cs
+  in
+    Pictures (interior ++ character ++ computer)
+        \end{verbatim}
+        The \texttt{drawMap} function is responsible for collecting the rendering properties of all entities and returning them as a single combined picture to be rendered onto the screen.\\
+        \newline
+In the \texttt{let} clause, the rendering properties of different types of entities are determined by helper functions with similar functionality. These properties are returned as lists of pictures and are then concatenated and passed to the \texttt{Pictures} constructor and returned.
+        \subsubsection{Board}
+        This module consists of a single function, \texttt{createBoard}, that an indexable list of elements from whick to draw the playing board.
+
+\begin{verbatim}
+createBoard :: Matrix -> Board
+createBoard board =
+  let
+    rows = length (board) - 1
+    cols = length (board !! 0) - 1
+  in
+    listArray ( (0,0), (cols, rows) ) (generateBoard board 0 [])
+    where
+
+      generateBoard []     _ acc = acc
+      generateBoard matrix x acc = generateBoard matrix' (x+1)
+                                   (acc ++ generateColumn column 0)
+        where
+
+          -- First column of the matrix, and the rest of the matrix
+          (column, matrix') = getFirstColumn matrix
+
+          generateColumn :: Tiles -> Int -> Tiles
+          generateColumn [] _ = []
+          generateColumn ts y = (Tile.setPosition (last ts) x y):
+                                (generateColumn (init ts) (y+1))
+
+          getFirstColumn :: Matrix -> (Tiles, Matrix)
+          getFirstColumn []          = ([],[])
+          getFirstColumn ([t]:ts)    = (t:(fst (getFirstColumn ts)), [])
+          getFirstColumn ((x:xs):ys) =
+            let
+              column = x : (fst (getFirstColumn ys))
+              matrix = xs : (snd (getFirstColumn ys))
+            in
+              (column, matrix)
+\end{verbatim}
+Due to the way arrays differ from \textbf{Gloss} in the definition for how pairs of integers are ordered, e.g. the tuple \texttt{(2,1)} is greater than \texttt{(1,2)} whereas this is not the case for \texttt{Gloss}, the matrix of \texttt{Tile}s must be transposed before being converted to an array in order to achieve a correct coordinate system. The input matrix is simply a list of list of \texttt{Tile}s where each list represent a row.\\
+ \newline
+ Firstly, the number of rows is set to the length of the input list as this is equal to the number of rows in the matrix analogy. The number of rows is equal to the length of the first, or any for that matter, list in the matrix, minus one. The function then calls on the \texttt{listArray}, which is a member of the \texttt{Data.Array} module, to receive an \texttt{Array} with a lower bound of (0,0), upper bound of \texttt{(cols, rows)} and holding the elements of the playing board.\\
+ \newline
+ The actual elements are generated by three helper functions, the first being \texttt{generateBoard}. This function takes a \texttt{Board}, an integer and a list of \texttt{Tile}s where the last argument acts as an accumulator that will contain the entire board when the base case is reached. The function is simply a recursive call with the modified matrix consisting of the original without the first column. This is achieved by passing passing \texttt{matrix} to the helper function \texttt{getFirstColumn}. It returns a tuple containing the first element of every list together with the remaining matrix. \\
+ \newline
+The second argument in the recursive call is the integer increased by one for the purpose of keeping track of the x coordinate which should change with every horizontal movement. Lastly, the accumulator is concatenated with the result of passing the column received from the previous helper function and the y coordinate 0 to \texttt{generateColumn}.\\
+\newline
+This final helper function generates a column by calling \texttt{Tile.setPosition} (which returns whatever \texttt{Tile} type passed to it with the coordinates of two integer arguments) with the last element in the column and the current \texttt{x} and \texttt{y}. It then recurses over itself with the rest of the list and the argument \texttt{y} increased by 1. Since \texttt{x} will be a constant factor throughout the entire recursion and \texttt{y} is increased by 1 for each recursive call, this conforms to the column analogy as each element should only differ in its y-coordinate.\\
+\newline
+When all columns has been extracted, the base case is reached and the accumulator consisting of a list of columns is returned to \texttt{createBoard} and the functions returns the playing board wrapped in an \texttt{Array}.
+
+        \subsubsection{AI}
+        This section describes a selection of functions from the \texttt{AI.hs} module.
+        \paragraph{adjacentFloors}
+   \begin{verbatim}
+adjacentFloors :: (Int, Int) -> Board -> [(Int, Int)]
+adjacentFloors position board =
+  filter (isValidMove board) $ validCoordinates position
+  where
+    isValidMove :: Board -> (Int, Int) -> Bool
+    isValidMove b p = case (board ! p) of
+                        (Wall _) -> False
+                        _        -> True
+   \end{verbatim}
+The \texttt{adjacentFloors} function takes a coordinate and the playing board and returns a list of all neighbouring floors. \texttt{validCoordinates} is nothing but a list comprehension that returns every coordinate that lies directly to the top, left, bottom and right to the input coordinate, given that those coordinates does not step outside the bounds of the board. These coordinates are then filtered with the helper function \texttt{isValidMove} to remove coordinates that represent a wall on the board.
+        \paragraph{Cost}
+   \begin{verbatim}
+cost :: (Int, Int) -> [(Int, Int)] -> Int
+cost goal path = let
+                   current = last path
+                   steps   = length path - 1
+                 in
+                   steps + (distance current goal)
+   \end{verbatim}
+The \texttt{cost} function calculates the approximated total cost of a path. \texttt{current} is the last coordinate in the path and \texttt{steps} is simply the number of steps already taken, which is equal to the length of the path, minus one. The function returns the sum of the distance traversed so far and the distance between the last tile and the goal
+\paragraph{newPaths}
+\begin{verbatim}
+newPaths :: Board -> [(Int, Int)] -> [[(Int, Int)]]
+newPaths board path =
+   let
+     paths = filter (`notElem` path) $ adjacentFloors (last path) board
+     pathList = map (\p->path++[p]) paths
+   in
+     pathList
+\end{verbatim}
+\texttt{newPaths} is responsible for creating forking paths from a single tile. It first calls \texttt{adjacentFloors} with the last coordinates in the current path along with the playing board to get all valid neighbouring tiles. It then filters away all coordinates that are already in the path, that is, mainly the coordinate we came from. Finally every remaining neighbour is concatenated to the end of path and returned in a list.
+
+\paragraph{costOfPaths}
+   \begin{verbatim}
+costOfPaths :: [[(Int, Int)]] -> (Int, Int) -> [(Int, [(Int, Int)])]
+costOfPaths paths goal = let
+                           costs = map (cost goal) paths
+                         in
+                           zip costs paths
+   \end{verbatim}
+This function takes a list of paths and the goal coordinates as arguments and maps each path to its approximated total cost.
+        \paragraph{aStar}
+           \begin{verbatim}
+aStar :: Board -> (Int, Int) -> (Int, Int) -> [(Int, Int)]
+aStar board goal start = aStarAux board goal [[start]] where
+     aStarAux board _ [] = []
+     aStarAux board goal paths
+       | any (\p -> last p == goal) paths =
+           tail (head (filter (\p-> last p == goal) paths))
+       | otherwise =
+         let
+           best = snd . minimum $ costOfPaths paths goal
+           next = newPaths board best
+         in
+           aStarAux board goal $ filter (/= best) paths ++ next
+ \end{verbatim}
+
+ The \texttt{aStar} function is where the algorithm comes together. The function takes the playing board, the goal coordinate and the starting coordinate as arguments and and calls an auxiliary function, \texttt{aStarAux} with \texttt{board}, \texttt{goal} and a list of possible paths, initially consisting of simply \texttt{start}.\\
+ \newline
+ The base case for \texttt{aStarAux} is if the list of possible paths is empty which indicates that there are no possible paths to the goal and the algorithm has failed. If not, the first guard checks if any of the paths in \texttt{paths} contains the goal. If so, this path is extracted from the list. \texttt{head} is applied to obtain a single list, and lastly \texttt{tail} removes the starting position which is redundant at this point.\\
+\newline
+In the case that no path contains the goal, the function \texttt{costOfPaths} returns a list of tuples containing all the current paths mapped to its total cost. The program extracts the tuple with the lowest cost and assigns the path in it to \texttt{best}. It then passes \texttt{best} to \texttt{newPaths} that returns a list of paths consisting of \texttt{best} followed by a valid neighbour to the last element in \texttt{best}.
+Finally, a recursive call to \texttt{aStarAux} is made with the pathlist with \texttt{next} concatenated and \texttt{best} removed since this path now exists in all elements of \texttt{next}.
+\section{External libraries}
+\subsection{Gloss}
+\section{Discussion}
+Here follows a reflection over the results of the finished game and its shortcomings.
+
+\subsection{Functionality}
+The aim to construct a satisfactory AI was accomplished although the task of doing so was, at times, difficult. The implementation details of the algorithm in a functional language is quite different from the approach expected in imperative or object oriented ones. In either of those paradigms, one could simply declare a number of global variables to hold for example the list of open tiles that are considered as part of the path, and freely manipulate this list at will. Obviously, this is an impossible approach in a state-less language such as Haskell.\\
+\newline
+Hence, the challenge laid in constructing a single logical and mathematical expression to accomplish the task, in contrast to the often more flexible approach of imperative programming. The inspiration for the solution in this game was written by Robin Schroer \cite{schroer} and while his work serves mainly as a blueprint on how to approach the problem, the source code does borrow from Schroer at certain points where it is deemed unreasonable to phrase it in any other way.\\
+\newline
+To conclude: the authors of this report has found this path finding implementation both effective and correct
+\subsection{Shortcomings}
+Although efficient from a optimization point of view, the AI presents a simultaneously unfair and predictable opponent. Unfair in the sense that it is constantly in direct pursuit, disregarding line of sight or distance, and predictable due to the fact that it can quite easily be manipulated into occupying the same tile as another computer entity, effectively reducing the number of opponents by one for the remainder of the game as these two entities will act identical from this point forward.\\
+\newline
+The most straight forward way to avoid the clipping of the AIs would be to make a few changes in the path finding algorithm and handle tiles where there is an AI as walls. A more thorough method to modify the behavior of the AI would be to implement some sort of roaming feature such that the computer opponent is not always in direct pursuit of the player but instead randomly roams the map until a certain condition is met and the path finding algorithm is invoked. One could also design different personalities for each entity regarding their strategy for pursuit, making it difficult for a player to exploit known patterns or shortcomings. Additionally, these traits could be randomized for each AI from a predetermined set of calibrations.\\
+\newline
+The game lacks a way for the player to change the difficulty, this could in part be related to tweaking the personalities of the AI but also the required number of treasures needed to advance the game as well as the moving speed of the player and AI.\\
+\newline
+This blablabl nåt om att de hakar in i varandra
+\section{Conclusion}
+
+
+\begin{thebibliography}{9}
+
+\bibitem{schroer}
+  Robin Schroer,
+  A* Pathfinding in Functional Languages,
+  https://sulami.github.io/a-pathfinding-in-functional-languages.html
+
+\end{thebibliography}
+\end{document}

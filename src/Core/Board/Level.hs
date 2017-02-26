@@ -1,5 +1,5 @@
 module Core.Board.Level
-        ( Level, nextLevel, setLevel, getBoard, getGoal, getLevelNumber, checkForTreasure, spawnPosition, testSuite, testSuiteExceptions ) where
+        ( Level, getBoard, getLevelNumber, getGoal, spawnPosition, nextLevel, setLevel, checkForTreasure, testSuite, testSuiteExceptions ) where
 
 -- Modules for testing
 import Test.HUnit
@@ -20,10 +20,46 @@ import qualified Core.Extras.Resources as Resources
     A level is given by Level b xy n g. The first argument, b, is the board, map, of the level while the second is the default position for the AIs to spawn on. The level number is n, and g is the total number of treasures on a map that a player must collect in order to advance to the next.
 
   REPRESENTATION INVARIANT:
-    The number of treasures on a map must be above 0. The default position of the AI must be valid positions on the board.
+    The number of treasures on a map must be above 0. The default position of the AI must be valid positions on the board. The board must not have overlapping tiles.
 -}
 data Level = Level Board.Board Actor.Position Int Int
            deriving (Eq, Show) -- for testing purposes only
+
+{- getBoard l
+  PRE:           True
+  POST:          The board of l
+  SIDE EFFECTS:  None
+  EXAMPLES:      Calling getBoard on a level gives only the board on that level.
+-}
+getBoard :: Level -> Board.Board
+getBoard (Level b _ _ _) = b
+
+{- getLevelNumber l
+  PRE:           True
+  POST:          Level number of l
+  SIDE EFFECTS:  None
+  EXAMPLES:      Calling getLevelNumber on a level with level number 100 gives 100
+-}
+getLevelNumber :: Level -> Int
+getLevelNumber (Level _ _ n _) = n
+
+{- getGoal l
+  PRE:           True
+  POST:          The level goal of l
+  SIDE EFFECTS:  None
+  EXAMPLES:      Calling getGoal on a level with goal 1 gives 1
+-}
+getGoal :: Level -> Int
+getGoal (Level _ _ _ g) = g
+
+{- spawnPosition l
+  PRE:       True.
+  POST:      Default spawn position for AIs.
+  SIDE EFFECTS:
+  EXAMPLES:    spawnPosition ==
+-}
+spawnPosition :: Level -> (Float, Float)
+spawnPosition (Level _ p _ _) = p
 
 {- nextLevel l
    PRE:           True
@@ -37,7 +73,7 @@ nextLevel (Level _ _ n _) = setLevel (n+1)
 {- setLevel i
    PRE:           i >= 0
    POST:          If there exists a map with number i, then a level with that map as a Board together with the starting position of the player, otherwise Nothing
-   SIDE EFFECTS:  None
+   SIDE EFFECTS:  Prints an error message to the screen if i < 0.
    EXAMPLES:      setLevel 0 gives the first level
 -}
 setLevel :: Int -> Maybe (Level, Actor.Position)
@@ -75,33 +111,6 @@ setLevel i
         | Tile.hasTreasure t = i + 1
         | otherwise = i
 
-{- getBoard l
-   PRE:           True
-   POST:          The board of l
-   SIDE EFFECTS:  None
-   EXAMPLES:      Calling getBoard on a level gives only the board on that level.
--}
-getBoard :: Level -> Board.Board
-getBoard (Level b _ _ _) = b
-
-{- getGoal l
-   PRE:           True
-   POST:          The level goal of l
-   SIDE EFFECTS:  None
-   EXAMPLES:      Calling getGoal on a level with goal 1 gives 1
--}
-getGoal :: Level -> Int
-getGoal (Level _ _ _ g) = g
-
-{- getLevelNumber l
-   PRE:           True
-   POST:          Level number of l
-   SIDE EFFECTS:  None
-   EXAMPLES:      Calling getLevelNumber on a level with level number 100 gives 100
--}
-getLevelNumber :: Level -> Int
-getLevelNumber (Level _ _ n _) = n
-
 {- checkForTreasure l s p
    PRE:           p must be valid coordinates for the level.
    POST:          If p has treasure, then l without a treasure on that position and s + 1, otherwise l and s as they are.
@@ -122,15 +131,6 @@ checkForTreasure level@(Level board cp n g) p =
       -}
       foundTreasure :: Board.Board -> (Int, Int) -> Bool
       foundTreasure board position = Tile.hasTreasure (board ! position)
-
-{- spawnPosition l
-   PRE:       True.
-   POST:      Default spawn position for AIs.
-   SIDE EFFECTS:
-   EXAMPLES:    spawnPosition ==
--}
-spawnPosition :: Level -> (Float, Float)
-spawnPosition (Level _ p _ _) = p
 
 -------------------------------------------
 -- TEST CASES

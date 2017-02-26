@@ -18,7 +18,7 @@ import qualified Core.Extras.Resources as Resources
     A splash screen is given by Slash str s, where str is a text to display, and s is a State representing the next state of the game.
 
   REPRESENTATION INVARIANT:
-    Score should not be greater than the level goal of the Level.
+    None.
 -}
 data GameState = State Level.Level Score Actor.Actors Float
                | Splash String GameState

@@ -11,7 +11,7 @@ import Test.HUnit
     A tile is an unmovable piece on the board. A floor is a valid path for a computer or the player and is given by Floor (a, b) t where (a, b) are the coordinates of the floor and t signifies if there is a treasure on that tile. A wall is an invalid path given by Wall (a, b), where (a,b) are the coordinates of the wall.
 
   REPRESENTATION INVARIANT:
-    Tiles cannot have overlapping positions.
+    None.
 -}
 data Tile = Floor (Int, Int) Treasure | Wall (Int, Int)
           deriving (Show, Eq) -- For unit testing
