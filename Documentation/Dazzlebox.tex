@@ -307,7 +307,7 @@ Note that this algorithm is not verbatim to the usual definition for A* but rath
   		\subsubsection{Player Movement}
         The player's movement is decided by two factors. Firstly, the game registers when a key is pressed on the keyboard by the user to control the character. If a relevant key, i.e. an arrow key, is pressed, the character's \textit{desired} direction of movement will be updated. Note that the desired direction differs from the actual direction of movement: In order to avoid the player moving orthogonal to its current direction of movement when in between two tiles, the direction the player wants to move in is tracked, to be used once the player has reached the center of a tile. However, if the desired direction is the opposite of the current direction, the change will occur instantly, rather than after the player having reached the center of a tile, which would cause a small delay. \\
         \newline
-        The second deciding factor \todo{SE ÖVER!}(Kan man säga så?) of the player's movement is whether they are at the center of a tile and if it is possible to move in the desired direction. The algorithm prioritizes the desired direction over the current direction, and will therefore first evaluate the next tile in the desired direction to determine if it is a valid tile to move to. If that is the case, the player's current direction will be updated. Otherwise, the next tile in the current direction will be evaluated. If the path forward is clear for the player, they will continue to move in that direction. Otherwise, in the case of a wall on that position, the player will stop moving. \\
+        The second deciding factor of the player's movement is whether they are at the center of a tile and if it is possible to move in the desired direction. The algorithm prioritizes the desired direction over the current direction, and will therefore first evaluate the next tile in the desired direction to determine if it is a valid tile to move to. If that is the case, the player's current direction will be updated. Otherwise, the next tile in the current direction will be evaluated. If the path forward is clear for the player, they will continue to move in that direction. Otherwise, in the case of a wall on that position, the player will stop moving. \\
         \newline
 
 		\todo{Skrivit om denna del ovan. Se över/Ta bort detta!}\textbf{TIDIGARE:} Where the player moves is decided by two checks, the first one being a check of keys pressed on the keyboard to decide where the player wants to move. This is performed for each frame and if a relevant key is pressed, the direction of desired movement is updated. Note that the direction of desired movement differs from the direction of movement. In order to avoid the player moving orthogonal to its current direction of movement when in between two tiles, the direction of where the player wants to move is tracked to be used once it reaches a tile center. However, if the desired direction is the opposite of the current direction the change is instant.
@@ -338,15 +338,22 @@ This conversion is made using the following formula:
 \end{eqnarray}
 	Where x is the coordinate stored in the tile, d is the width of a tile in pixels, t is the amount of tiles in one row and x' is the coordinate of the pixel in the center of the tile.
 
-	We chose to use x' as the center of the tile because. \\
+	We chose to use x' as the center of the tile because. \todo{Because why?} \\
 \paragraph{Rendering Tiles}
 	To render the polygon and lines for a tile one needs the coordinates of every corner. We achieve this using the coordinate of where the center of the tile is supposed to be rendered and the thickness of it in pixels. With these two we can know where the corners must be by adding or subtracting half of the tile width. \\
 
-\paragraph{Rendering Actors}
-
+		\paragraph{Rendering Actors}
+		\newpage
     	\subsection{Modules}
         This section covers in detail the most important modules used in the game and its code.
-        \subsubsection{Main}
+begin
+
+\begin{figure}[h]
+\includegraphics[scale=0.7]{hierarchy.png}
+\caption{A map of the module structure}
+\end{figure}
+
+\subsubsection{Main}
         The \texttt{Main} module consists of three functions:
         \begin{verbatim}
 window :: Display
@@ -361,16 +368,17 @@ main = play window backgroundColor GameEngine.fps
        GameEngine.handleKeyEvents GameEngine.step
         \end{verbatim}
 
-		\noindent The \texttt{main} function is the first function to be called when the program executes, and will in turn call the \texttt{play} function (provided by \texttt{Gloss}-library), which allows for, amongst other things, custom event handling in a simulation. \\
+		\noindent The \texttt{main} function is the first function to be called when the program executes, and will in turn invoke the \texttt{play} function (provided by the \texttt{Gloss}-library), which allows for, amongst other things, custom event handling in a simulation. \\
         \newline
-        This function is passed as arguments a window in which to display the game, its background color,  \texttt{GameEngine.fps}, which is an integer representing the number of times to update the screen each second, and \texttt{GameState.initialState}, which is the default state the game will start in. Furthermore, \texttt{play} also takes three callback functions:
+        This function is passed as arguments a window for displaying the game, its background color, \texttt{GameEngine.fps}, which is an integer representing the number of times to update the screen each second, and \texttt{GameState.initialState}, that is, the default state the game will start in. Furthermore, \texttt{play} also takes three callback functions:
         \begin{enumerate}
         \item \texttt{GraphicsEngine.render}: A function that converts the state into a \texttt{Picture}.
         \item \texttt{GameEngine.handleKeyEvents}: A function that handles input events.
         \item \texttt{GameEngine.step}: A function that should update the state one step.
         \end{enumerate}
-
-		\noindent It is these three functions that are essentially responsible for anything to happen and will be described in the following sections.
+        The result from \texttt{GameEngine.step} or \texttt{GameEngine.handleKeyEvents} will be passed by \texttt{play} to the \texttt{GraphicsEngine.render} function, which then will return the state represented as a \texttt{Picture} for \texttt{Gloss} to render into a 2D image. \\
+        \newline
+		These three functions are essential to the program's basic functionality and will be described in the following sections.
         \subsubsection{GameEngine}
         This section covers some of the central functions of the \texttt{GameEngine} module.
         \paragraph{step}
@@ -379,11 +387,9 @@ step :: Float -> GameState -> GameState
 step _ state@(Splash _ _) = state
 step _ state              = moveActors (setMovement state)
         \end{verbatim}
-
-        \noindent The \texttt{step} function, invoked by the \texttt{play} function of the \texttt{Gloss}-library 60 times a second, is responsible for updating the state of the game. \\
+        \noindent The \texttt{step} function, invoked by \texttt{play} 60 times a second, updates the state of the game. \\
         \newline
-        It is passed a floating point number, representing the number of seconds since last updated, and the current state. If the game state is a splash screen, it will be returned unmodified. Otherwise, the function \texttt{setMovement}, which will set the movements of all the actors during one update, will be invoked with the current state. The result of this function will then be passed to \texttt{moveActors}, described below.
-\newline
+        It is passed a floating point number, representing the number of seconds since the last update, and the current state. If the game state is a splash screen, it will be returned unmodified. Otherwise, the function passes the current state to \texttt{setMovement}, which will set the direction of movement of all the actors during one update. The result of this function will then be passed to \texttt{moveActors}, described below.
 \paragraph{moveActors}
 \begin{verbatim}
 moveActors :: GameState -> GameState
@@ -401,12 +407,13 @@ moveActors state@(State l s (Actor.Actors player ai) t)
        case Level.checkForTreasure l (closestTile (Actor.position newPlayer)) of
           Just l' -> (l', s + 1)
           Nothing -> (l, s)
+    (...)
 \end{verbatim}
-		The \texttt{moveActors} function is responsible for changing the position of the actors in the state, but also to evaluate whether the player has reached the level goal or if the AI has caught the player. \\
+		The \texttt{moveActors} function is responsible for changing the position of the actors, but also to check whether the player has reached the level goal or if the AI has caught the player. \\
 		\newline
-        In the above code fragment, the argument \texttt{s} represents the players current score. If the first guard statement evaluates to true, meaning that the player's current score is greater than or equal to the level requirements, then the function will return as the new state a \texttt{Splash} informing the user that the level is complete, along with the next stage, which is either a new level or, if there are no more levels, a new \texttt{Splash} with a victory message. \\
+        In the above code fragment, the argument \texttt{s} represents the players current score. If the first guard statement evaluates to \texttt{True}, meaning that the player's current score is greater than or equal to the level requirements, then the function will return as the new state a \texttt{Splash} informing the user that the level is complete, along with the next state (See section 3.1.4.1 for more detail on \texttt{nextState}), which will be either a new level or, if there are no more levels, a new \texttt{Splash} with a victory message. \\
         \newline
-        If the player has not yet reached the level requirements, the function will proceed by first setting the AIs' and the player's new positions (by invoking the function \texttt{Actor.makeMove} described in section 3.2.1.1), and then checking if the AIs in their new position has caught up with the player. This check is performed by the helper function \texttt{caughtPlayer}: \\
+        If the player has not yet reached the level requirements, the function will proceed by first setting the AIs' and the player's new positions (by invoking the function \texttt{Actor.makeMove} described in section 3.2.1.1), and then checking if the AIs in their new position has caught the player. This check is performed by the helper function \texttt{caughtPlayer}: \\
 
 \begin{verbatim}
 caughtPlayer :: [Actor.Actor] -> Actor.Actor -> Bool
@@ -422,9 +429,9 @@ caughtPlayer (ai:ais) player = (abs (x-a) < 0.5 && abs (y-b) < 0.5)
         \newline
         If the function \texttt{caughtPlayer} evaluates to \texttt{True}, the \texttt{moveActors} function will return a \texttt{Splash} with the "Game Over" message and the initial state as its arguments. \\
         \newline
-        Otherwise, the return value will be essentially the same state as inputed, but with the position of the actors updated. The function also checks if the player is about to move over a tile with a treasure on it. If that is the case, the score of the player will increment by one, while the level passed along with the new state will be modified (by the \texttt{checkForTreasures} function described in section 3.1.5.1) so that the tile no longer holds a treasure. Otherwise, the same exact level and score will be passed with the new state.
-			\paragraph{setMovement}
-            \begin{verbatim}
+        Otherwise, the return value will be essentially the same state as inputed, but with the position of the actors updated. The function also checks if the player is about to move over a tile with a treasure on it. If this yields \texttt{True}, the score of the player will increment by one, while the level passed along with the new state will be modified (by the \texttt{checkForTreasures} function described in section 3.1.5.1) so that the tile no longer holds a treasure. Otherwise, the same exact level and score will be passed with the new state.
+		\paragraph{setMovement}
+\begin{verbatim}
 setMovement :: GameState -> GameState
 setMovement (State level s (Actor.Actors player ai) t) =
    let
@@ -433,46 +440,102 @@ setMovement (State level s (Actor.Actors player ai) t) =
   in
     State level s (Actor.Actors (setPlayerMovement board player)
     (setAIMovements board player newAI)) t'
-            \end{verbatim}
-            While the name of the function might indicate that it is \texttt{setMovement} updates the positions of the actors, in reality, this function updates the conditions of the next movement of the actors, i.e. the direction of movement. \\
-            \newline
-			Though, \texttt{setMovement} is also responsible for spawning new AIs and invokes the helper function \texttt{spawnAI} (omitted here), which is tasked with creating new AIs at a set time and to a certain limit. In the second argument passed to the helper function, \texttt{t} represents the time passed since the last spawn and is increased each frame by \texttt{timeStep}, which is defined: \[\frac{1}{\textit{frames per second}}\]
-            Together with a limit on the number of AIs that should be present during one level (currently set to 5), the game can thus keep track of when to spawn new opponents and when to not.
-			\\
-            \newline
-            The return value of \texttt{setMovement} will be essentially the same state but with the actors having their directions updated, by the functions \texttt{setPlayerMovement} and \textbf{setAIMovements}.
-			\paragraph{setAIMovements}\todo{Se över!}
-            The \texttt{setAIMovements} function uses several helper functions, that will for the sake of readability be split into several parts and explained separately, beginning with the main function:
+\end{verbatim}
+		While the name of the function might indicate that it is \texttt{setMovement} that updates the positions of the actors, this function in fact sets the conditions of the next movement of the actors, i.e. the direction of movement. \\
+		\newline
+		\texttt{setMovement} is also responsible for spawning new AIs by using the helper function \texttt{spawnAI} (omitted here), which is tasked with creating new AIs on a set interval and to a certain limit. In the second argument passed to the helper function, \texttt{t} represents the time passed since the last spawn and is increased each frame by \texttt{timeStep}, which is defined: \[\frac{1}{\textit{frames per second}}\]
+		Together with a limit on the number of AIs that should be present during one level (currently set to 5), the game can thus keep track of when to spawn new opponents and when to not. \\
+        \newline
+        The return value of \texttt{setMovement} will be the same state but with the actors having their directions updated, by the functions \texttt{setPlayerMovement} and \textbf{setAIMovements}.
+		\paragraph{setAIMovements}\mbox{}\\ \newline
+        The \texttt{setAIMovements} function uses several helper functions, that will for the sake of readability be split into several parts here and explained separately, beginning with the main function:
 \begin{verbatim}
 setAIMovements :: Board.Board -> Actor.Actor -> [Actor.Actor] -> [Actor.Actor]
 setAIMovements _ _    [] = []
 setAIMovements board p c = map (setAIMovement board (Actor.position p)) c
-  where
-  	(...)
+  where (...)
 \end{verbatim}
-\textbf{setAIMovements} takes a \texttt{Board}, an \texttt{Actor} and a list of \texttt{Actors}. The first \texttt{Actor} argument is the player entity, while the list of actors are the AIs.
-\texttt{setAIMovements} returns a list of actors by mapping the helper function \texttt{setAIMovement} applied to the player position and the board over all computer actors in the input list. This helper function returns a computer with its new direction of movement depending on its position and the path returned from \texttt{calculateAIMovement}. In this example the function call to \texttt{calculateAIMovement} has been replaced by "\texttt{(..)}" for readability but its purpose is to calculate the path to the player by passing the position of the computer, the player position and the current board to \texttt{aStar}.
-
-The helper function responsible for
-%The function also calls \texttt{changeAIDirection}
-
-
-\paragraph{setPlayerMovement}
+		\textbf{setAIMovements} takes a \texttt{Board}, an \texttt{Actor} and a list of \texttt{Actors} and returns a list of \texttt{Actors}. The first \texttt{Actor} is the player entity, while the list of actors are the AIs. \\
+        \newline This function maps over the list of AIs, applying each element in the list to the helper function \texttt{setAIMovement}, along with the board and position of the player. The helper function will return the AI possibly with, depending on a few conditions, a new direction. \\
+\begin{verbatim}
+setAIMovement :: Board.Board -> (Float, Float) -> Actor.Actor -> Actor.Actor
+setAIMovement board xy c
+   | Common.zero direction || null paths =
+      changeAIDirection pos (calculateAIMovement board xy pos)
+   | otherwise =
+      if (hasReachedDestination aiSpeed pos (head paths))
+         then
+            changeAIDirection pos (calculateAIMovement board xy pos)
+         else
+            Actor.createAI pos direction paths Sprite.ai
+   where pos       = Actor.position c
+         direction = Actor.direction c
+         paths     = Actor.paths c
+\end{verbatim}
+		As described in section 3.2.4, the AI will get its new direction of motion when it has reached the first tile in its calculated path. This is determined by the \texttt{setAIMovement} function shown above. \\
+        \newline
+        More precisely, the function first examines if the AI is standing still, or if its list of paths is empty. If this guard statement evaluates to \texttt{True}, \texttt{changeAIDirection} is invoked with the AIs current position, and the result of another function, \texttt{calculateAIMovement} which yields a new list of paths from the path finding algorithm, as its arguments. \\
+        \newline
+        When the AI is in motion and has a path to move in, the function will check whether the AI has reached the next tile in its path. If this is the case, it will as in the previous guard statement call \texttt{changeAIDrection}. Otherwise, the same AI will be returned. \\
+        \newline Note: The function \texttt{hasReachedDestination} will not be explained in detail here. It can be summarized as assessing whether the distance between the approximate position of the AI and the next tile in its path is less than the speed of motion of the AI. \\
+        \newline
+        \texttt{changeAIDirection} is the function in which the AIs direction is changed and can be seen below:
+\begin{verbatim}
+changeAIDirection :: (Float, Float) -> [(Int, Int)] -> Actor.Actor
+changeAIDirection pos path@((x', y'):_) =
+   Actor.createAI pos direction path Sprite.ai
+      where direction = (fromIntegral x', fromIntegral y') - pos
+\end{verbatim}
+		It will simply return an AI with the same position inputed (the argument \texttt{pos}), the same path (argument \texttt{path}) but with its direction calculated as its current position subtracted from the position of the next tile in the path. \\
+        \newline
+        The \texttt{calculateAIMovement} function mentioned above is responsible for getting a new path for the AI. It takes a \texttt{Board}, two pairs of \texttt{Float} as its second and third argument and returns a list of integer pairs. The function body is defined:
+\begin{verbatim}
+calculateAIMovement board destination start =
+   let (d, s) = (closestTile destination, closestTile start)
+   in case (AI.aStar board d s) of
+      [] -> [s]
+      ps -> ps
+\end{verbatim}
+		The second argument, when called from \texttt{setAIMovement}, will be the position of the player while the third argument is the current position of the AI. By finding the position of the tiles that (most closely) corresponds to the actor's positions, the \texttt{aStar} function of the AI module (which contains the path finding algorithm) is invoked with these values. If the result is an empty list, \texttt{calculateAIMovement} will simply return the current position of the AI. Otherwise, the entire list passed from \texttt{aStar}.
+		\paragraph{setPlayerMovement}\mbox{} \\
+		\newline
+		For readability reasons, \texttt{setPlayerMovement} and its helper function will also be split up and explained separately. (Note: Some of the identifiers in the code below have been shortened, compared to the source code, for formatting reasons.)
 \begin{verbatim}
 setPlayerMovement :: Board.Board -> Actor.Actor -> Actor.Actor
 setPlayerMovement board player
-  | Common.zero direction && Common.zero nextDirection = player
-  | Common.zero (direction + nextDirection) =
-    Actor.createPlayer position nextDirection nextDirection sprites
-  | otherwise =
-   if (hasReachedDestination playerSpeed position (closestTile position))
-     then
-      Actor.createPlayer position (...) nextDirection sprites
-      else
-        player
+   | Common.zero dir && Common.zero nextDir = player
+   | Common.zero (dir + nextDir) =
+     Actor.createPlayer pos nextDir nextDir sprites
+   | otherwise =
+      if (hasReachedDestination playerSpeed pos (closestTile pos))
+         then  Actor.createPlayer pos newDir nextDir sprites
+         else  player
+   where
+      newDir  = (changePlayerDirection board pos dir nextDir)
+      pos     = Actor.position player
+      sprites = Sprite.player
+      (dir, nextDir) = Actor.directions player
+      (...)
 \end{verbatim}
-This function is responsible for setting the direction of movement of the player. It returns a player with the appropriate direction depending on the the board, her position, current direction as well as  wanted direction of movement. Just like with \texttt{calculateAIMovement} the helper function \texttt{changePlayerDirection} has been replaced by "\texttt{(...)}" for the case of readability and is in charge of changing the direction of movement once the player has reached the center of a tile. Both \texttt{setPlayerMovement} and \texttt{setAIMovement} use \texttt{hasReachedDestination} to approximate the if the actor has reached a tile.
+		This function is responsible for setting the direction of movement of the player. It takes a \texttt{Board}, an \texttt{Actor} and returns a player with the appropriate direction depending on the board, their position, and current direction as well as the desired direction of movement. \\
+		\newline
+      The first guard statement examines whether the player is standing still, and will return the same player unchanged if \texttt{True}. The second statement is concerning whether the player wants to move opposite his direction (i.e. a 180 degrees turn). In this case, the player's current direction is changed to his desired, next direction. \\
+			\newline
+			Otherwise, the function evaluates whether the player is on, or as close to as possible, the center of a tile, in which case a new direction is calculated by \texttt{changePlayerDirection} and set as the current direction of the \texttt{Player} returned. \todo{Är detta korrekt, jmf med algoritmbeskrivningen ovan?} \\
+			\newline
+			The \texttt{changePlayerDirection} function, seen below without the function signature, takes as its first argument a \texttt{Board}, followed by three pairs of \texttt{Float} representing the current position of the player, the direction of movement and the desired direction.
+\begin{verbatim}
+changePlayerDirection board position direction nextDirection =
+   let approxPosition = approximatePosition position (fst playerSpeed)
+   in  if isValidMove board (closestTile (approxPosition + nextDirection))
+	        then nextDirection
+					else if isValidMove board (closestTile (approxPosition + direction))
+					   then direction
+             else (0, 0)
 
+\end{verbatim}
+				This function is tasked with calculating which direction the player should move in, by . As described in section \todo{hitta siffran}, the desired direction is prioritized over the current direction. \\
+				\newline
 
 
         \subsubsection{GraphicsEngine}
@@ -548,7 +611,7 @@ The second argument in the recursive call is the integer increased by one for th
 This final helper function generates a column by calling \texttt{Tile.setPosition} (which returns whatever \texttt{Tile} type passed to it with the coordinates of two integer arguments) with the last element in the column and the current \texttt{x} and \texttt{y}. It then recurses over itself with the rest of the list and the argument \texttt{y} increased by 1. Since \texttt{x} will be a constant factor throughout the entire recursion and \texttt{y} is increased by 1 for each recursive call, this conforms to the column analogy as each element should only differ in its y-coordinate.\\
 \newline
 When all columns has been extracted, the base case is reached and the accumulator consisting of a list of columns is returned to \texttt{createBoard} and the functions returns the playing board wrapped in an \texttt{Array}.
-
+\newpage
         \subsubsection{AI}
         This section describes a selection of functions from the \texttt{AI.hs} module.
         \paragraph{adjacentFloors}
@@ -630,9 +693,9 @@ To conclude: the authors of this report has found this path finding implementati
 \subsection{Shortcomings}
 Although efficient from a optimization point of view, the AI presents a simultaneously unfair and predictable opponent. Unfair in the sense that it is constantly in direct pursuit, disregarding line of sight or distance, and predictable due to the fact that it can quite easily be manipulated into occupying the same tile as another computer entity, effectively reducing the number of opponents by one for the remainder of the game as these two entities will act identical from this point forward.\\
 \newline
-The most straight forward way to avoid the clipping of the AIs would be to make a few changes in the path finding algorithm and handle tiles where there is an AI as walls. A more thorough method to modify the behavior of the AI would be to implement some sort of roaming feature such that the computer opponent is not always in direct pursuit of the player but instead randomly roams the map until a certain condition is met and the path finding algorithm is invoked. One could also design different personalities for each entity regarding their strategy for pursuit, making it difficult for a player to exploit known patterns or shortcomings. Additionally, these traits could be randomized for each AI from a predetermined set of calibrations.\\
+One way to avoid the clipping of the AIs would be to make modifications to the path finding algorithm to regard tiles already occupied by an AI as walls. A more thorough method would be to implement a roaming feature of sorts such that the computer opponent is not always in direct pursuit of the player but instead randomly roaming the map until a certain condition is met and the path finding algorithm is invoked. One could also design different personalities for each entity regarding their strategy for pursuit, making it difficult for a player to exploit known patterns or shortcomings. Additionally, these traits could be randomized for each AI from a predetermined set of calibrations.\\
 \newline
-The game lacks a way for the player to change the difficulty, this could in part be related to tweaking the personalities of the AI but also the required number of treasures needed to advance the game as well as the moving speed of the player and AI.\\
+The game lacks a way for the player to change the difficulty. Such a feature could in part be related to the aforementioned tweaking of the AI personalities in addition to the required number of treasures needed to advance the game as well as the moving speed of the player and AI.\\
 \newline
 This blablabl nåt om att de hakar in i varandra
 \section{Conclusion}

@@ -101,7 +101,7 @@ changePlayerMovement player k =
    PRE:           True
    POST:          s with its actors position updated.
    SIDE EFFECTS:  None
-   EXAMPLES:      moveActors (setMovement (nextState initialState)) == a new state with the position of the states actors updated one step according to their direction.
+   EXAMPLES:      moveActors (setMovement (nextState initialState)) == a new state with the position of the actors updated one step according to their direction.
                   moveActors (nextState initialState) == (nextState initialState)
 -}
 moveActors :: GameState.GameState -> GameState.GameState
@@ -197,7 +197,7 @@ setAIMovements board p c = map (setAIMovement board (Actor.position p)) c
            POST:          Shortest path in b from s to d
            SIDE EFFECTS:  Prints error message to the screen if d and s is not valid coordinates in b
            EXAMPLES:      calculateAIMovement (Board.createBoard (Resources.levels !! 0)) (1,1) (2,2)     == [(1,2),(1,1)]
-           EXAMPLES:      calculateAIMovement (Board.createBoard (Resources.levels !! 0)) (999,999) (2,2) == [(2,2)]
+                          calculateAIMovement (Board.createBoard (Resources.levels !! 0)) (999,999) (2,2) == [(2,2)]
                           calculateAIMovement (Board.createBoard (Resources.levels !! 0)) (88,88) (99,99) == an exception
         -}
         calculateAIMovement :: Board.Board -> (Float, Float) -> (Float, Float) -> [(Int, Int)]
@@ -233,7 +233,7 @@ setPlayerMovement board player
       else player
   where
     (position, (direction, nextDirection), sprites) = (Actor.position player, Actor.directions player, Sprite.player)
-    {- setPlayerDirection b p d nd
+    {- changePlayerDirection b p d nd
        PRE:           p, p + d and p + nd must be coordinates in b
        POST:          nd if the approximation of p + nd will produce a valid move in b, d if the approximation of p + d is a valid move in b. Otherwise (0,0)
        SIDE EFFECTS:  Prints an error to the screen in p, or the sum of p and d or nd is not valid coordinates in b

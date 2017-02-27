@@ -56,10 +56,10 @@ createBoard board =
           generateColumn [] _ = []
           generateColumn ts y = (Tile.setPosition (last ts) x y):(generateColumn (init ts) (y+1))
           {-  getFirstColumn m
-              PRE:          True
-              POST:         The first column of m and the matrix that is left when removing that column
-              SIDE EFFECTS: None
-              EXAMPLES:     getFirstColumn [ [ Wall (0,0), Wall (0,0) ], [ Floor (0,0) False,  Floor (0,0) False ] ] gives a tuple with first component a list consisting of a Wall (0,0) and a Floor (0, 0) and the rest of the inputed matrix [ [ Wall (0,0), Floor (0,0) False ] ]
+              PRE:            True
+              POST:           The first column of m and the matrix that is left when removing that column
+              SIDE EFFECTS:   None
+              EXAMPLES:       getFirstColumn [ [ Wall (0,0), Wall (0,0) ], [ Floor (0,0) False,  Floor (0,0) False ] ] gives a tuple with first component a list consisting of a Wall (0,0) and a Floor (0, 0) and the rest of the inputed matrix [ [ Wall (0,0), Floor (0,0) False ] ]
               VARIANT:      height of m
           -}
           getFirstColumn :: Matrix -> (Tiles, Matrix)

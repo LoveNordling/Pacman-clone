@@ -73,8 +73,7 @@ distance (x0, y0) (x1, y1) = abs (x1-x0) + abs (y1-y0)
    PRE:           path is not empty
    POST:          The total estimated cost from path to goal
    SIDE EFFECTS:  None
-   EXAMPLES:      cost ()
-                  cost (1,1) [] == 0
+   EXAMPLES:      cost (1,1) [] == 0
 -}
 cost :: (Int, Int) -> [(Int, Int)] -> Int
 cost goal []   = 0
@@ -121,7 +120,7 @@ aStar board goal start = aStarAux board goal [[start]] where
            POST:          The shortest path from s to g in b
            SIDE EFFECTS:  Prints an error message if either g or the positions in p are invalid coordiantes in b
            EXAMPLES:      aStarAux b (6,6) [[(8,8)]], where b is a board where the shortest path from (6,6) to (8,8) is through coordinates (6, 7) and (7, 7), gives the list [(8,7), (7,7), (6,7), (6,6)]
-           VARIANT:       ??
+           VARIANT:       Number of floors in b
         -}
         aStarAux :: Board.Board -> (Int, Int) -> [[(Int, Int)]] -> [(Int, Int)]
         aStarAux board _ [] = []
